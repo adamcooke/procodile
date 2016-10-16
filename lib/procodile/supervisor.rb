@@ -22,13 +22,14 @@ module Procodile
 
     def start
       Procodile.log nil, "system", "#{@config.app_name} supervisor started with PID #{::Process.pid}"
-      @config.processes.each do |name, process|
-        start_instances(process.generate_instances)
-      end
 
       Thread.new do
         socket = ControlServer.new(self)
         socket.listen
+      end
+
+      @config.processes.each do |name, process|
+        start_instances(process.generate_instances)
       end
 
       supervise
