@@ -47,9 +47,9 @@ module Procodile
       else
         FileUtils.rm_f(File.join(@config.pid_root, "*.pid"))
         pid = fork do
-          STDOUT.reopen(log_path, 'a')
+          STDOUT.reopen(@config.log_path, 'a')
           STDOUT.sync = true
-          STDERR.reopen(log_path, 'a')
+          STDERR.reopen(@config.log_path, 'a')
           STDERR.sync = true
           Supervisor.new(@config).start(:processes => processes)
         end
@@ -178,11 +178,7 @@ module Procodile
     end
 
     def pid_path
-      File.join(@config.pid_root, 'supervisor.pid')
-    end
-
-    def log_path
-      File.join(@config.log_root, 'supervisor.log')
+      File.join(@config.pid_root, 'procodile.pid')
     end
 
     def process_names_from_cli_option

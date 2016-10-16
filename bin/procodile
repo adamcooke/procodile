@@ -28,7 +28,7 @@ begin
     end
   end.parse!
 rescue OptionParser::InvalidOption => e
-  $stderr.puts "\e[31merror: #{e.message}\e[0m"
+  $stderr.puts "Error: #{e.message}".color(31)
   exit 1
 end
 
@@ -46,6 +46,6 @@ begin
   cli = Procodile::CLI.new(config, options)
   cli.run(command)
 rescue Procodile::Error => e
-  $stderr.puts "\e[31merror: #{e.message}\e[0m"
+  $stderr.puts "Error: #{e.message}".color(31)
   exit 1
 end

@@ -14,9 +14,7 @@ module Procodile
       unless File.exist?(procfile_path)
         raise Error, "Procfile not found at #{procfile_path}"
       end
-
       FileUtils.mkdir_p(pid_root)
-      FileUtils.mkdir_p(log_root)
     end
 
     def reload
@@ -73,8 +71,8 @@ module Procodile
       @pid_root ||= File.expand_path(options['pid_root'] || 'pids', @root)
     end
 
-    def log_root
-      @log_root ||= File.expand_path(options['log_root'] || 'log', @root)
+    def log_path
+      @log_path ||= File.expand_path(options['log_path'] || 'procodile.log', @root)
     end
 
     def sock_path

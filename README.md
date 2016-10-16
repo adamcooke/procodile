@@ -120,7 +120,7 @@ If you make changes to your `Procfile` or `Procfile.options` files you can push 
 * If you increase the quantity of a process, new processes will be started.
 * If you decrease the quantity of a process, processes will be stopped.
 * If you change a command, the old command will continue to run until you next `restart`.
-* Changes to `app_name`, `log_root` and `pid_root` will not be updated until the supervisor is restarted.
+* Changes to `app_name`, `log_path` and `pid_root` will not be updated until the supervisor is restarted.
 
 ### Killing everything
 
@@ -143,14 +143,16 @@ Now... until this point you were just using the defaults for everything. If you 
 app_name: Llama Kit
 # The directory that all PIDs will be stored in (default is 'pids')
 pid_root: tmp/procodile-pids
-# The direcory that process logs will be stored in (default is 'log')
-log_root: log/processes
+# The direcory that the procodile log file will be stored (default is 'procodile.log')
+log_path: log/procodile.log
 
 # The next part allows you to add configuration for each type of process
 processes:
   web:
     # The number of this type of process that should be started (default is 1)
     quantity: 2
+    # The path to store STDOUT/STDERR output for this process (default is to store in the procodile log)
+    log_path: log/processs/web.log
     # The mode that should be used when restart this process (default is term-start)
     restart_mode: usr2
     # The maximum number of respawns that are permitted in the respawn window (default is 5)

@@ -39,6 +39,14 @@ module Procodile
     end
 
     #
+    # Return the path where log output for this process should be written to. If
+    # none, output will be written to the supervisor log.
+    #
+    def log_path
+      @options['log_path'] ? File.expand_path(@options['log_path'], @config.root) : nil
+    end
+
+    #
     # Defines how this process should be restarted
     #
     # start-term = start new instances and send term to children
@@ -68,7 +76,8 @@ module Procodile
         :max_respawns => self.max_respawns,
         :respawn_window => self.respawn_window,
         :command => self.command,
-        :restart_mode => self.restart_mode
+        :restart_mode => self.restart_mode,
+        :log_path => self.log_path
       }
     end
 

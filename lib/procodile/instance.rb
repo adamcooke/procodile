@@ -35,13 +35,6 @@ module Procodile
     end
 
     #
-    # Return the path to this instance's log file
-    #
-    def log_file_path
-      File.join(@process.config.log_root, "#{description}.log")
-    end
-
-    #
     # Return the PID that is in the instances process PID file
     #
     def pid_from_file
@@ -77,13 +70,24 @@ module Procodile
         # to monitor this process rather than spawning a new one.
         @pid = existing_pid
         Procodile.log(@process.log_color, description, "Already running with PID #{@pid}")
+        nil
       else
-        log_file = File.open(self.log_file_path, 'a')
+        if self.process.log_path
+          log_destination = File.open(self.process.log_path, 'a')
+          return_value = nil
+        else
+          reader, writer = IO.pipe
+          log_destination = writer
+          return_value = reader
+        end
+
         Dir.chdir(@process.config.root)
-        @pid = ::Process.spawn({'PID_FILE' => pid_file_path}, @process.command, :out => log_file, :err => log_file, :pgroup => true)
+        @pid = ::Process.spawn({'PID_FILE' => pid_file_path}, @process.command, :out => log_destination, :err => log_destination, :pgroup => true)
         Procodile.log(@process.log_color, description, "Started with PID #{@pid}")
         File.open(pid_file_path, 'w') { |f| f.write(@pid.to_s + "\n") }
         ::Process.detach(@pid)
+
+        return_value
       end
     end
 
@@ -193,7 +197,7 @@ module Procodile
           add_respawn
         elsif respawns >= @process.max_respawns
           Procodile.log(@process.log_color, description, "\e[41;37mWarning:\e[0m\e[31m this process has been respawned #{respawns} times and keeps dying.\e[0m")
-          Procodile.log(@process.log_color, description, "\e[31mIt will not be respawned automatically any longer and will no longer be managed.\e[0m")
+          Procodile.log(@process.log_color, description, "It will not be respawned automatically any longer and will no longer be managed.").color(31)
           tidy
           unmonitor
         end

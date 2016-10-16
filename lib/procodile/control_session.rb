@@ -16,7 +16,7 @@ module Procodile
           Procodile.log nil, 'control', "Received #{command} command"
           public_send(command, options)
         rescue Procodile::Error => e
-          Procodile.log nil, 'control', "\e[31mError: #{e.message}\e[0m"
+          Procodile.log nil, 'control', "Error: #{e.message}".color(31)
           "500 #{e.message}"
         end
       else

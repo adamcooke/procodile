@@ -6,17 +6,16 @@ module Procodile
     attr_reader :config
     attr_reader :processes
 
-    # Create a new supervisor instance that will be monitoring the
-    # processes that have been provided.
     def initialize(config)
       @config = config
       @processes = {}
-      signal_handler = SignalHandler.new('TERM', 'USR1', 'USR2', 'INT', 'HUP')
-      signal_handler.register('TERM') { stop_supervisor }
-      signal_handler.register('INT') { stop }
-      signal_handler.register('USR1') { restart }
-      signal_handler.register('USR2') { status }
-      signal_handler.register('HUP') { reload_config }
+      @readers = {}
+      @signal_handler = SignalHandler.new('TERM', 'USR1', 'USR2', 'INT', 'HUP')
+      @signal_handler.register('TERM') { stop_supervisor }
+      @signal_handler.register('INT') { stop }
+      @signal_handler.register('USR1') { restart }
+      @signal_handler.register('USR2') { status }
+      @signal_handler.register('HUP') { reload_config }
     end
 
     def start(options = {})
@@ -26,6 +25,7 @@ module Procodile
         socket.listen
       end
       start_processes(options[:processes])
+      watch_for_output
       supervise
     end
 
@@ -123,6 +123,30 @@ module Procodile
 
     private
 
+    def watch_for_output
+      Thread.new do
+        loop do
+          io = IO.select([@signal_handler.pipe[:reader]] + @readers.keys, nil, nil, 30)
+          @signal_handler.handle
+          if io
+            io.first.each do |reader|
+              next if reader == @signal_handler.pipe[:reader]
+              if reader.eof?
+                @readers.delete(reader)
+              else
+                data = reader.gets
+                if instance = @readers[reader]
+                  Procodile.log instance.process.log_color, instance.description, "=> ".color(instance.process.log_color) + data
+                else
+                  Procodile.log nil, 'unknown', data
+                end
+              end
+            end
+          end
+        end
+      end
+    end
+
     def check_instance_quantities
       @processes.each do |process, instances|
         if instances.size > process.quantity
@@ -140,7 +164,8 @@ module Procodile
 
     def start_instances(instances)
       instances.each do |instance|
-        instance.start
+        io = instance.start
+        @readers[io] = instance if io
         @processes[instance.process] ||= []
         @processes[instance.process] << instance
       end
