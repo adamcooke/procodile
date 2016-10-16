@@ -123,12 +123,21 @@ module Procodile
           puts "||".color(process['log_color']) + " Respawning     " + "#{process['max_respawns']} every #{process['respawn_window']} seconds"
           puts "||".color(process['log_color']) + " Restart mode   " + process['restart_mode']
           puts "||".color(process['log_color']) + " Log path       " + (process['log_path'] || "none specified")
-          stats['instances'][process['name']].each do |instance|
-            print "|| ".color(process['log_color']) + instance['description'].to_s.ljust(20, ' ').color(process['log_color'])
-            print "pid " + instance['pid'].to_s.ljust(12, ' ')
-            print (instance['running'] ? 'Running' : 'Stopped').to_s.ljust(15, ' ')
-            print instance['respawns'].to_s + " respawns"
-            puts
+          instances = stats['instances'][process['name']]
+          if instances.empty?
+            puts "||".color(process['log_color']) + " No processes running."
+          else
+            instances.each do |instance|
+              print "|| ".color(process['log_color']) + instance['description'].to_s.ljust(20, ' ').color(process['log_color'])
+              if instance['running']
+                print ' Running '.color("42;37")
+              else
+                print ' Stopped '.color("41;37")
+              end
+              print "     pid " + instance['pid'].to_s.ljust(12, ' ')
+              print instance['respawns'].to_s + " respawns"
+              puts
+            end
           end
         end
       else

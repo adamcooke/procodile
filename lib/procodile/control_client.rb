@@ -24,15 +24,19 @@ module Procodile
 
     def run(command, options = {})
       @socket.puts("#{command} #{options.to_json}")
-      code, reply = @socket.gets.strip.split(/\s+/, 2)
-      if code.to_i == 200
-        if reply && reply.length > 0
-          JSON.parse(reply)
+      if data = @socket.gets
+        code, reply = data.strip.split(/\s+/, 2)
+        if code.to_i == 200
+          if reply && reply.length > 0
+            JSON.parse(reply)
+          else
+            true
+          end
         else
-          true
+          raise Error, "Error from control server: #{code} (#{reply.inspect})"
         end
       else
-        raise Error, "Error from control server: #{code} (#{reply.inspect})"
+        raise Error ,"Control server disconnected."
       end
     end
 

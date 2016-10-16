@@ -37,7 +37,7 @@ module Procodile
       Array.new.tap do |instances_started|
         @config.processes.each do |name, process|
           next if types && !types.include?(name.to_s) # Not a process we want
-          next if @processes.keys.include?(process)   # Process type already running
+          next if @processes[process] && !@processes[process].empty?   # Process type already running
           instances = start_instances(process.generate_instances)
           instances_started.push(*instances)
         end
@@ -117,7 +117,7 @@ module Procodile
       end
 
       # If the processes go away, we can stop the supervisor now
-      if @processes.size == 0
+      if @processes.all? { |_,instances| instances.size == 0 }
         Procodile.log nil, "system", "All processes have stopped"
         stop_supervisor
       end
@@ -185,7 +185,7 @@ module Procodile
     def remove_unmonitored_instances
       @processes.each do |_, instances|
         instances.reject!(&:unmonitored?)
-      end.reject! { |_, instances| instances.empty? }
+      end
     end
 
     def remove_stopped_instances
@@ -198,7 +198,7 @@ module Procodile
             false
           end
         end
-      end.reject! { |_, instances| instances.empty? }
+      end
     end
 
     def process_names_to_instances(names)
