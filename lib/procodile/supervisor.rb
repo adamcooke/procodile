@@ -19,19 +19,25 @@ module Procodile
       signal_handler.register('HUP') { reload_config }
     end
 
-    def start
+    def start(options = {})
       Procodile.log nil, "system", "#{@config.app_name} supervisor started with PID #{::Process.pid}"
-
       Thread.new do
         socket = ControlServer.new(self)
         socket.listen
       end
-
-      @config.processes.each do |name, process|
-        start_instances(process.generate_instances)
-      end
-
+      start_processes(options[:processes])
       supervise
+    end
+
+    def start_processes(types = [])
+      Array.new.tap do |instances_started|
+        @config.processes.each do |name, process|
+          next if types && !types.include?(name.to_s) # Not a process we want
+          next if @processes.keys.include?(process)   # Process type already running
+          instances = start_instances(process.generate_instances)
+          instances_started.push(*instances)
+        end
+      end
     end
 
     def stop(options = {})

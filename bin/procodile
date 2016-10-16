@@ -21,7 +21,7 @@ begin
       end
     end
 
-    if ['stop', 'restart'].include?(command)
+    if ['start', 'stop', 'restart'].include?(command)
       opts.on("-p", "--processes a,b,c", "Only #{command} the listed processes or process types") do |processes|
         options[:processes] = processes
       end

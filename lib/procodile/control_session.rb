@@ -24,6 +24,11 @@ module Procodile
       end
     end
 
+    def start_processes(options)
+      instances = @supervisor.start_processes(options['processes'])
+      "200 " + instances.map(&:to_hash).to_json
+    end
+
     def stop(options)
       instances = @supervisor.stop(:processes => options['processes'])
       "200 " + instances.map(&:to_hash).to_json

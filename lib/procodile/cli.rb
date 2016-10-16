@@ -22,7 +22,20 @@ module Procodile
 
     def start
       if running?
-        raise Error, "#{@config.app_name} already running (PID: #{current_pid})"
+        processes = @cli_options[:processes].split(',')
+        if processes.empty?
+          raise Error, "At least one process must be specified when starting after the supervisor is running"
+        else
+          instances = ControlClient.run(@config.sock_path, 'start_processes', :processes => processes)
+          if instances.empty?
+            raise Error, "No processes were started. The type you entered might already be running or isn't defined."
+          else
+            instances.each do |instance|
+              puts "Started #{instance['description']} (PID: #{instance['pid']})"
+            end
+          end
+          return
+        end
       end
 
       if @cli_options[:clean]
@@ -31,9 +44,15 @@ module Procodile
         puts "Removed all old pid & sock files"
       end
 
+      if @cli_options[:processes]
+        processes = @cli_options[:processes].split(',')
+      else
+        processes = nil
+      end
+
       if @cli_options[:foreground]
         File.open(pid_path, 'w') { |f| f.write(::Process.pid) }
-        Supervisor.new(@config).start
+        Supervisor.new(@config).start(:processes => processes)
       else
         FileUtils.rm_f(File.join(@config.pid_root, "*.pid"))
         pid = fork do
@@ -41,7 +60,7 @@ module Procodile
           STDOUT.sync = true
           STDERR.reopen(log_path, 'a')
           STDERR.sync = true
-          Supervisor.new(@config).start
+          Supervisor.new(@config).start(:processes => processes)
         end
         ::Process.detach(pid)
         File.open(pid_path, 'w') { |f| f.write(pid) }
