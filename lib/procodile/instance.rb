@@ -11,22 +11,37 @@ module Procodile
       @respawns = 0
     end
 
+    #
+    # Return a description for this instance
+    #
     def description
       "#{@process.name}.#{@id}"
     end
 
+    #
+    # Is this instance dead?
+    #
     def dead?
       @dead || false
     end
 
+    #
+    # Return the path to this instance's PID file
+    #
     def pid_file_path
       File.join(@process.config.pid_root, "#{description}.pid")
     end
 
+    #
+    # Return the path to this instance's log file
+    #
     def log_file_path
       File.join(@process.config.log_root, "#{description}.log")
     end
 
+    #
+    # Return the PID that is in the instances process PID file
+    #
     def pid_from_file
       if File.exist?(pid_file_path)
         pid = File.read(pid_file_path)
@@ -36,6 +51,9 @@ module Procodile
       end
     end
 
+    #
+    # Is this process running? Pass an option to check the given PID instead of the instance
+    #
     def running?(force_pid = nil)
       if force_pid || @pid
         ::Process.getpgid(force_pid || @pid) ? true : false
@@ -46,6 +64,9 @@ module Procodile
       false
     end
 
+    #
+    # Start a new instance of this process
+    #
     def start
       @stopping = false
       Dir.chdir(@process.config.root) do
