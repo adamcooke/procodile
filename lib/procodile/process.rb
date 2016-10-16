@@ -3,22 +3,18 @@ require 'procodile/instance'
 module Procodile
   class Process
 
-    attr_reader :name
-    attr_reader :command
     attr_reader :config
+    attr_reader :name
+    attr_accessor :command
+    attr_accessor :options
+    attr_accessor :log_color
 
     def initialize(config, name, command, options = {})
       @config = config
       @name = name
       @command = command
       @options = options
-    end
-
-    #
-    # Return the color for this process
-    #
-    def log_color
-      @options['log_color'] || 0
+      @log_color = 0
     end
 
     #
@@ -57,8 +53,8 @@ module Procodile
     #
     # Generate an array of new instances for this process (based on its quantity)
     #
-    def generate_instances
-      quantity.times.map { |i| Instance.new(self, i + 1) }
+    def generate_instances(quantity = self.quantity, start_number = 1)
+      quantity.times.map { |i| Instance.new(self, i + start_number) }
     end
 
   end

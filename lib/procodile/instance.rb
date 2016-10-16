@@ -4,6 +4,8 @@ module Procodile
   class Instance
 
     attr_accessor :pid
+    attr_reader :id
+    attr_accessor :process
 
     def initialize(process, id)
       @process = process
@@ -19,10 +21,10 @@ module Procodile
     end
 
     #
-    # Is this instance dead?
+    # Should this instance still be monitored by the supervisor?
     #
-    def dead?
-      @dead || false
+    def unmonitored?
+      @monitored == false
     end
 
     #
@@ -69,13 +71,12 @@ module Procodile
     #
     def start
       @stopping = false
-      Dir.chdir(@process.config.root) do
-        log_file = File.open(self.log_file_path, 'a')
-        @pid = ::Process.spawn({'PID_FILE' => pid_file_path}, @process.command, :out => log_file, :err => log_file, :pgroup => true)
-        Procodile.log(@process.log_color, description, "Started with PID #{@pid}")
-        File.open(pid_file_path, 'w') { |f| f.write(@pid.to_s + "\n") }
-        ::Process.detach(@pid)
-      end
+      log_file = File.open(self.log_file_path, 'a')
+      Dir.chdir(@process.config.root)
+      @pid = ::Process.spawn({'PID_FILE' => pid_file_path}, @process.command, :out => log_file, :err => log_file, :pgroup => true)
+      Procodile.log(@process.log_color, description, "Started with PID #{@pid}")
+      File.open(pid_file_path, 'w') { |f| f.write(@pid.to_s + "\n") }
+      ::Process.detach(@pid)
     end
 
     #
@@ -105,6 +106,14 @@ module Procodile
     # started again
     #
     def on_stop
+      tidy
+      unmonitor
+    end
+
+    #
+    # Tidy up when this process isn't needed any more
+    #
+    def tidy
       FileUtils.rm_f(self.pid_file_path)
       Procodile.log(@process.log_color, description, "Removed PID file")
     end
@@ -177,7 +186,8 @@ module Procodile
         elsif respawns >= @process.max_respawns
           Procodile.log(@process.log_color, description, "\e[41;37mWarning:\e[0m\e[31m this process has been respawned #{respawns} times and keeps dying.\e[0m")
           Procodile.log(@process.log_color, description, "\e[31mIt will not be respawned automatically any longer and will no longer be managed.\e[0m")
-          die
+          tidy
+          unmonitor
         end
       end
     end
@@ -185,9 +195,8 @@ module Procodile
     #
     # Mark this process as dead and tidy up after it
     #
-    def die
-      on_stop
-      @dead = true
+    def unmonitor
+      @monitored = false
     end
 
     #
