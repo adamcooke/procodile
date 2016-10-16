@@ -17,13 +17,9 @@ require 'procodile/cli'
 
 Thread.abort_on_exception = true
 begin
-
   config = Procodile::Config.new(options[:root] ? File.expand_path(options[:root]) : FileUtils.pwd)
-  command = ARGV[0]
-
   cli = Procodile::CLI.new(config)
-  cli.run(command)
-
+  cli.run(ARGV[0])
 rescue Procodile::Error => e
   $stderr.puts "\e[31merror: #{e.message}\e[0m"
   exit 1
