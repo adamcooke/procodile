@@ -75,6 +75,15 @@ module Procodile
       end
     end
 
+    def reload_config
+      if running?
+        ::Process.kill('HUP', current_pid)
+        puts "Reloading config for #{@config.app_name}"
+      else
+        raise Error, "#{@config.app_name} supervisor isn't running"
+      end
+    end
+
     def status
       if running?
         puts "#{@config.app_name} running (PID: #{current_pid})"
