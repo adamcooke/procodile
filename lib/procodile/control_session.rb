@@ -39,11 +39,6 @@ module Procodile
       "200"
     end
 
-    def stop_supervisor(options)
-      @supervisor.stop_supervisor
-      "200"
-    end
-
     def status(options)
       status = {}
       for process, instances in @supervisor.processes

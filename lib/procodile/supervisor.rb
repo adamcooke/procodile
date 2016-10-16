@@ -13,7 +13,7 @@ module Procodile
       @processes = {}
 
       signal_handler = SignalHandler.new('TERM', 'USR1', 'USR2', 'INT', 'HUP')
-      signal_handler.register('TERM') { stop }
+      signal_handler.register('TERM') { stop_supervisor }
       signal_handler.register('INT') { stop }
       signal_handler.register('USR1') { restart }
       signal_handler.register('USR2') { status }
