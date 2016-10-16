@@ -1,10 +1,12 @@
 app_name: BananaApp
 processes:
   web:
-    quantity: 1
+    quantity: 2
     max_respawns: 2
+    #log_path: log/webwebweb.log
   worker:
     quantity: 1
     restart_mode: start-term
   cron:
+    quantity: 1
     restart_mode: usr1
