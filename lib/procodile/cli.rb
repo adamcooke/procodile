@@ -6,8 +6,9 @@ require 'procodile/signal_handler'
 module Procodile
   class CLI
 
-    def initialize(config)
+    def initialize(config, cli_options = {})
       @config = config
+      @cli_options = cli_options
     end
 
     def run(command)
