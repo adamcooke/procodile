@@ -25,13 +25,13 @@ module Procodile
     end
 
     def stop(options)
-      @supervisor.stop
-      "200"
+      instances = @supervisor.stop(:processes => options['processes'])
+      "200 " + instances.map(&:to_hash).to_json
     end
 
     def restart(options)
-      @supervisor.restart
-      "200"
+      instances = @supervisor.restart(:processes => options['processes'])
+      "200 " + instances.map(&:to_hash).to_json
     end
 
     def reload_config(options)

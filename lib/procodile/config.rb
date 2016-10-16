@@ -47,7 +47,7 @@ module Procodile
     end
 
     def app_name
-      options['app_name'] || 'Procodile'
+      @app_name ||= options['app_name'] || 'Procodile'
     end
 
     def processes
@@ -70,11 +70,11 @@ module Procodile
     end
 
     def pid_root
-      File.expand_path(options['pid_root'] || 'pids', @root)
+      @pid_root ||= File.expand_path(options['pid_root'] || 'pids', @root)
     end
 
     def log_root
-      File.expand_path(options['log_root'] || 'log', @root)
+      @log_root ||= File.expand_path(options['log_root'] || 'log', @root)
     end
 
     def sock_path

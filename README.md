@@ -62,7 +62,9 @@ To stop your proceses, just run the `procodile stop` command. This will send a `
 
 ```
 procodile stop -r path/to/your/app
-# Stopping Procodile
+# Stopping web.1 (PID: 86780)
+# Stopping worker,1 (PID: 86781)
+# Stopping cron.1 (PID: 86782)
 ```
 
 The actual Procodile master process won't stop until all of its monitored processes have stopped running. This means that you won't be able to start it again until this finishes. If you need to stop the supervisor, you can do this with the `stop_supervisor` command. Doing this will leave any processes it was managing orphans and will need to be stopped/monitored manually.
@@ -77,7 +79,9 @@ The most common command you'll use is `restart`. Each time your deploy your appl
 
 ```
 procodile restart -r path/to/your/app
-# Restarting Procodile
+# Restarting web.1 (PID: 87214)
+# Restarting worker.1 (PID: 87215)
+# Restarting cron.1 (PID: 87216)
 ```
 
 Restarting processes is a tricky process and there are 4 different modes which you can choose for your processes which define exactly how Procodile will restart it.
@@ -90,14 +94,16 @@ You can see how to choose which mode is used for your processes below.
 
 ### Getting the status
 
-Procdile can tell you its current status by running the `status` command. Running this will tell the supervisor process to append some status information to your log file. The output looks a little bit like this:
+Procdile can tell you its current status by running the `status` command. This will show the status for all processes that are being supervised by Procodile.
 
-```
-02:09:07 status          | Status as at: 2016-10-16 01:09:07 UTC
-02:09:07 status          | web.1 is RUNNING (pid 20200). Respawned 0 time(s)
-02:09:07 status          | worker.1 is RUNNING (pid 20201). Respawned 2 time(s)
-02:09:07 status          | cron.1 is STOPPED
-```
+### Reloading configuration
+
+If you make changes to your `Procfile` or `Procfile.options` files you can push these updates into the running supervisor using the `reload_config` command.
+
+* If you increase the quantity of a process, new processes will be started.
+* If you decrease the quantity of a process, processes will be stopped.
+* If you change a command, the old command will continue to run until you next `restart`.
+* Changes to `app_name`, `log_root` and `pid_root` will not be updated until the supervisor is restarted.
 
 ### Killing everything
 

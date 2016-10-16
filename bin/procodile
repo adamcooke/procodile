@@ -16,6 +16,12 @@ begin
         options[:foreground] = true
       end
     end
+
+    if ['stop', 'restart'].include?(command)
+      opts.on("-p", "--processes a,b,c", "Only #{command} the listed processes or process types") do |processes|
+        options[:processes] = processes
+      end
+    end
   end.parse!
 rescue OptionParser::InvalidOption => e
   $stderr.puts "\e[31merror: #{e.message}\e[0m"

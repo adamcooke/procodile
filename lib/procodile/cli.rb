@@ -44,8 +44,42 @@ module Procodile
 
     def stop
       if running?
-        ControlClient.run(@config.sock_path, 'stop')
-        puts "Stopping #{@config.app_name} processes & supervisor..."
+        options = {}
+        if @cli_options[:processes]
+          processes = @cli_options[:processes].split(',')
+          instances = ControlClient.run(@config.sock_path, 'stop', :processes => processes)
+        else
+          instances = ControlClient.run(@config.sock_path, 'stop')
+        end
+        if instances.empty?
+          puts "There are no processes to stop."
+        else
+          instances.each do |instance|
+            puts "Stopping #{instance['description']} (PID: #{instance['pid']})"
+          end
+        end
+      else
+        raise Error, "#{@config.app_name} supervisor isn't running"
+      end
+    end
+
+    def restart
+      if running?
+        options = {}
+        if @cli_options[:processes]
+          processes = @cli_options[:processes].split(',')
+          instances = ControlClient.run(@config.sock_path, 'restart', :processes => processes)
+        else
+          instances = ControlClient.run(@config.sock_path, 'restart')
+        end
+
+        if instances.empty?
+          puts "There are no processes to restart."
+        else
+          instances.each do |instance|
+            puts "Restarting #{instance['description']} (PID: #{instance['pid']})"
+          end
+        end
       else
         raise Error, "#{@config.app_name} supervisor isn't running"
       end
@@ -61,16 +95,6 @@ module Procodile
         else
           puts "OK. That's fine. You can just run `stop` to stop processes too."
         end
-
-      else
-        raise Error, "#{@config.app_name} supervisor isn't running"
-      end
-    end
-
-    def restart
-      if running?
-        ControlClient.run(@config.sock_path, 'restart')
-        puts "Restarting #{@config.app_name}"
       else
         raise Error, "#{@config.app_name} supervisor isn't running"
       end

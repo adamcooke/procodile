@@ -35,23 +35,55 @@ module Procodile
       supervise
     end
 
-    def stop
-      return if @stopping
-      @stopping = true
-      Procodile.log nil, "system", "Stopping all #{@config.app_name} processes"
-      @processes.each { |_, instances| instances.each(&:stop) }
+    def stop(options = {})
+      Array.new.tap do |instances_stopped|
+        if options[:processes].nil?
+          return if @stopping
+          @stopping = true
+          Procodile.log nil, "system", "Stopping all #{@config.app_name} processes"
+            @processes.each do |_, instances|
+              instances.each do |instance|
+                instance.stop
+                instances_stopped << instance
+              end
+            end
+        else
+          instances = process_names_to_instances(options[:processes])
+          Procodile.log nil, "system", "Stopping #{instances.size} process(es)"
+          instances.each do |instance|
+            instance.stop
+            instances_stopped << instance
+          end
+        end
+      end
+    end
+
+    def restart(options = {})
+      @config.reload
+      Array.new.tap do |instances_restarted|
+        if options[:processes].nil?
+          Procodile.log nil, "system", "Restarting all #{@config.app_name} processes"
+          @processes.each do |_, instances|
+            instances.each do |instance|
+              instance.restart
+              instances_restarted << instance
+            end
+          end
+        else
+          instances = process_names_to_instances(options[:processes])
+          Procodile.log nil, "system", "Restarting #{instances.size} process(es)"
+          instances.each do |instance|
+            instance.restart
+            instances_restarted << instance
+          end
+        end
+      end
     end
 
     def stop_supervisor
       Procodile.log nil, 'system', "Stopping #{@config.app_name} supervisor"
       FileUtils.rm_f(File.join(@config.pid_root, 'supervisor.pid'))
       ::Process.exit 0
-    end
-
-    def restart
-      Procodile.log nil, 'system', "Restarting all #{@config.app_name} processes"
-      @config.reload
-      @processes.each { |_, instances| instances.each(&:restart) }
     end
 
     def status
@@ -76,18 +108,15 @@ module Procodile
         # Remove processes that have been stopped
         remove_stopped_instances
 
-        if @stopping
-          if @processes.size > 0
-            Procodile.log nil, "system", "Waiting for #{@processes.size} processes to stop"
-          else
-            Procodile.log nil, "system", "All processes have stopped"
-            stop_supervisor
-          end
-        else
-          # Check all instances that we manage and let them do their things.
-          @processes.each do |_, instances|
-            instances.each(&:check)
-          end
+        # Check all instances that we manage and let them do their things.
+        @processes.each do |_, instances|
+          instances.each(&:check)
+        end
+
+        # If the processes go away, we can stop the supervisor now
+        if @processes.size == 0
+          Procodile.log nil, "system", "All processes have stopped"
+          stop_supervisor
         end
 
         sleep 5
@@ -142,6 +171,26 @@ module Procodile
           end
         end
       end.reject! { |_, instances| instances.empty? }
+    end
+
+    def process_names_to_instances(names)
+      names.each_with_object([]) do |name, array|
+        if name =~ /\A(.*)\.(\d+)\z/
+          process_name, id = $1, $2
+          @processes.each do |process, instances|
+            next unless process.name == process_name
+            instances.each do |instance|
+              next unless instance.id == id.to_i
+              array << instance
+            end
+          end
+        else
+          @processes.each do |process, instances|
+            next unless process.name == name
+            instances.each { |i| array << i}
+          end
+        end
+      end
     end
 
   end

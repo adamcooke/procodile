@@ -229,5 +229,18 @@ module Procodile
       end
     end
 
+    #
+    # Return this instance as a hash
+    #
+    def to_hash
+      {
+        :description => self.description,
+        :command => @process.command,
+        :pid => self.pid,
+        :respawns => self.respawns,
+        :running => self.running?
+      }
+    end
+
   end
 end
