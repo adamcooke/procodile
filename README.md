@@ -6,6 +6,8 @@ Procodile is a bit like [Foreman](https://github.com/ddollar/foreman) but things
 
 Procodile works out of the box with your existing `Procfile`.
 
+![Screenshot](https://share.adam.ac/16/cAZRKUM7.png)
+
 ## Installing
 
 To get started, just install the Procodile gem on your server:
@@ -108,6 +110,8 @@ As with `stop`, you can pass `-p` to define which types of processes are restart
 ### Getting the status
 
 Procdile can tell you its current status by running the `status` command. This will show the status for all processes that are being supervised by Procodile.
+
+![Screenshot](https://share.adam.ac/16/NJBJBczv.png)
 
 ### Reloading configuration
 
