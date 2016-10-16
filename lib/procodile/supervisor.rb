@@ -11,7 +11,6 @@ module Procodile
     def initialize(config)
       @config = config
       @processes = {}
-
       signal_handler = SignalHandler.new('TERM', 'USR1', 'USR2', 'INT', 'HUP')
       signal_handler.register('TERM') { stop_supervisor }
       signal_handler.register('INT') { stop }

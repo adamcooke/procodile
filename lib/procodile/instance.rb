@@ -71,12 +71,20 @@ module Procodile
     #
     def start
       @stopping = false
-      log_file = File.open(self.log_file_path, 'a')
-      Dir.chdir(@process.config.root)
-      @pid = ::Process.spawn({'PID_FILE' => pid_file_path}, @process.command, :out => log_file, :err => log_file, :pgroup => true)
-      Procodile.log(@process.log_color, description, "Started with PID #{@pid}")
-      File.open(pid_file_path, 'w') { |f| f.write(@pid.to_s + "\n") }
-      ::Process.detach(@pid)
+      existing_pid = self.pid_from_file
+      if running?(existing_pid)
+        # If the PID in the file is already running, we should just just continue
+        # to monitor this process rather than spawning a new one.
+        @pid = existing_pid
+        Procodile.log(@process.log_color, description, "Already running with PID #{@pid}")
+      else
+        log_file = File.open(self.log_file_path, 'a')
+        Dir.chdir(@process.config.root)
+        @pid = ::Process.spawn({'PID_FILE' => pid_file_path}, @process.command, :out => log_file, :err => log_file, :pgroup => true)
+        Procodile.log(@process.log_color, description, "Started with PID #{@pid}")
+        File.open(pid_file_path, 'w') { |f| f.write(@pid.to_s + "\n") }
+        ::Process.detach(@pid)
+      end
     end
 
     #
