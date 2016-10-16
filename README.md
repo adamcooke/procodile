@@ -82,7 +82,7 @@ procodile stop -r path/to/your/app
 If you only wish to stop a certain process or type of process you can pass the `-p` option with a list of process types or names. In this example, it will stop `web.3` and all worker processes.
 
 ```
-procodile start -p web.3,worker
+procodile stop -p web.3,worker
 # Stopping web.3 (PID: 86780)
 # Stopping worker.1 (PID: 86781)
 # Stopping worker.2 (PID: 86782)
