@@ -24,6 +24,13 @@ module Procodile
       if running?
         raise Error, "#{@config.app_name} already running (PID: #{current_pid})"
       end
+
+      if @cli_options[:clean]
+        FileUtils.rm_f(File.join(@config.pid_root, '*.pid'))
+        FileUtils.rm_f(File.join(@config.pid_root, '*.sock'))
+        puts "Removed all old pid & sock files"
+      end
+
       if @cli_options[:foreground]
         File.open(pid_path, 'w') { |f| f.write(::Process.pid) }
         Supervisor.new(@config).start

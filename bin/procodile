@@ -15,6 +15,10 @@ begin
       opts.on("-f", "--foreground", "Run the supervisor in the foreground") do
         options[:foreground] = true
       end
+
+      opts.on("--clean", "Remove all previous PIDs before starting") do
+        options[:clean] = true
+      end
     end
 
     if ['stop', 'restart'].include?(command)
