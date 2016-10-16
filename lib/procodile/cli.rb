@@ -33,6 +33,9 @@ module Procodile
         end
       end
 
+      run_options = {}
+      run_options[:brittle] = @cli_options[:brittle]
+
       processes = process_names_from_cli_option
 
       if @cli_options[:clean]
@@ -43,7 +46,7 @@ module Procodile
 
       if @cli_options[:foreground]
         File.open(pid_path, 'w') { |f| f.write(::Process.pid) }
-        Supervisor.new(@config).start(:processes => processes)
+        Supervisor.new(@config, run_options).start(:processes => processes)
       else
         FileUtils.rm_f(File.join(@config.pid_root, "*.pid"))
         pid = fork do
@@ -51,7 +54,7 @@ module Procodile
           STDOUT.sync = true
           STDERR.reopen(@config.log_path, 'a')
           STDERR.sync = true
-          Supervisor.new(@config).start(:processes => processes)
+          Supervisor.new(@config, run_options).start(:processes => processes)
         end
         ::Process.detach(pid)
         File.open(pid_path, 'w') { |f| f.write(pid) }

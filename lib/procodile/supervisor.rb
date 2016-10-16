@@ -6,8 +6,9 @@ module Procodile
     attr_reader :config
     attr_reader :processes
 
-    def initialize(config)
+    def initialize(config, run_options = {})
       @config = config
+      @run_options = run_options
       @processes = {}
       @readers = {}
       @signal_handler = SignalHandler.new('TERM', 'USR1', 'USR2', 'INT', 'HUP')
@@ -20,13 +21,16 @@ module Procodile
 
     def start(options = {})
       Procodile.log nil, "system", "#{@config.app_name} supervisor started with PID #{::Process.pid}"
+      if @run_options[:brittle]
+        Procodile.log nil, "system", "Running in brittle mode"
+      end
       Thread.new do
         socket = ControlServer.new(self)
         socket.listen
       end
       start_processes(options[:processes])
       watch_for_output
-      supervise
+      loop { supervise; sleep 3 }
     end
 
     def start_processes(types = [])
@@ -92,26 +96,30 @@ module Procodile
     end
 
     def supervise
-      loop do
-        # Tidy up any instances that we no longer wish to be managed. They will
-        # be removed from the list.
-        remove_dead_instances
+      # Tidy up any instances that we no longer wish to be managed. They will
+      # be removed from the list.
+      remove_unmonitored_instances
 
-        # Remove processes that have been stopped
-        remove_stopped_instances
+      # Remove processes that have been stopped
+      remove_stopped_instances
 
-        # Check all instances that we manage and let them do their things.
-        @processes.each do |_, instances|
-          instances.each(&:check)
+      # Check all instances that we manage and let them do their things.
+      @processes.each do |_, instances|
+        instances.each do |instance|
+          instance.check
+          if instance.unmonitored?
+            if @run_options[:brittle]
+              Procodile.log nil, "system", "Stopping everything because a process has died in brittle mode."
+              return stop
+            end
+          end
         end
+      end
 
-        # If the processes go away, we can stop the supervisor now
-        if @processes.size == 0
-          Procodile.log nil, "system", "All processes have stopped"
-          stop_supervisor
-        end
-
-        sleep 5
+      # If the processes go away, we can stop the supervisor now
+      if @processes.size == 0
+        Procodile.log nil, "system", "All processes have stopped"
+        stop_supervisor
       end
     end
 
@@ -164,6 +172,9 @@ module Procodile
 
     def start_instances(instances)
       instances.each do |instance|
+        if @run_options[:brittle]
+          instance.respawnable = false
+        end
         io = instance.start
         @readers[io] = instance if io
         @processes[instance.process] ||= []
@@ -171,7 +182,7 @@ module Procodile
       end
     end
 
-    def remove_dead_instances
+    def remove_unmonitored_instances
       @processes.each do |_, instances|
         instances.reject!(&:unmonitored?)
       end.reject! { |_, instances| instances.empty? }

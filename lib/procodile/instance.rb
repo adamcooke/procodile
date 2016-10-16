@@ -6,11 +6,13 @@ module Procodile
     attr_accessor :pid
     attr_reader :id
     attr_accessor :process
+    attr_accessor :respawnable
 
     def initialize(process, id)
       @process = process
       @id = id
       @respawns = 0
+      @respawnable = true
     end
 
     #
@@ -168,7 +170,7 @@ module Procodile
     #
     def update_pid
       pid_from_file = self.pid_from_file
-      if pid_from_file != @pid
+      if pid_from_file && pid_from_file != @pid
         @pid = pid_from_file
         Procodile.log(@process.log_color, description, "PID file changed. Updated pid to #{@pid}")
         true
@@ -178,26 +180,34 @@ module Procodile
     end
 
     #
-    # Check the status of this process and handle as appropriate
+    # Check the status of this process and handle as appropriate.
     #
     def check
       # Don't do any checking if we're in the midst of a restart
       return if @restarting
+      return if unmonitored?
 
       if self.running?
         # Everything is OK. The process is running.
+        true
       else
         # If the process isn't running any more, update the PID in our memory from
         # the file in case the process has changed itself.
         return check if update_pid
 
-        if can_respawn?
-          Procodile.log(@process.log_color, description, "Process has stopped. Respawning...")
-          start
-          add_respawn
-        elsif respawns >= @process.max_respawns
-          Procodile.log(@process.log_color, description, "\e[41;37mWarning:\e[0m\e[31m this process has been respawned #{respawns} times and keeps dying.\e[0m")
-          Procodile.log(@process.log_color, description, "It will not be respawned automatically any longer and will no longer be managed.").color(31)
+        if @respawnable
+          if can_respawn?
+            Procodile.log(@process.log_color, description, "Process has stopped. Respawning...")
+            start
+            add_respawn
+          elsif respawns >= @process.max_respawns
+            Procodile.log(@process.log_color, description, "\e[41;37mWarning:\e[0m\e[31m this process has been respawned #{respawns} times and keeps dying.\e[0m")
+            Procodile.log(@process.log_color, description, "It will not be respawned automatically any longer and will no longer be managed.").color(31)
+            tidy
+            unmonitor
+          end
+        else
+          Procodile.log(@process.log_color, description, "Process has stopped. Respawning not available.")
           tidy
           unmonitor
         end

@@ -45,6 +45,8 @@ procdile start -r path/to/your/app
 # Started Procodile with PID 12345
 ```
 
+The `-r` option specifies the root of your application. If you don't provide one, your current working directory will be used.
+
 To see what's happening, you'll need to look at the `procodile.log` file which you'll in the root of your application. You'll find a more colourful version of this which shows that each of your processes has been started.
 
 ```
@@ -66,9 +68,12 @@ If you only wish to start a certain type (or types) of process. You can pass the
 procodile start -p web,worker
 ```
 
-#### Running in the foreground
+#### Additional options for start
 
-You can pass the `--foreground` (or `-f`) to the `start` command. This will keep the Procodile application in the foreground rather than running it in the background. If you CTRL+C while running in the foreground, all processes will be stopped. This can be used for development or when integrating Procodile with another process manager (i.e. upstart or systemd).
+* `-f` or `--foreground` - this will keep the Procodile application in the foreground rather than running it in the background. If you CTRL+C while running in the foreground, all processes will be stopped.
+* `--clean` - this will remove the contents of your `pids` directory before starting. This avoids the supervisor picking up any old processes and managing them when it shouldn't.
+* `-b` or `--brittle` - when enabled, if a single process dies, rather than respawning, all processes will be stopped and the supervisor shutdown.
+* `-d` or `--dev` - this is the same as specifying `--foreground` and `--brittle`. It's ideal when you want to run your application in the foreground when developing it because processes with issues won't just be started blindly.
 
 ### Stopping processes
 

@@ -1,5 +1,8 @@
 #!/usr/bin/env ruby
 require 'optparse'
+require 'fileutils'
+$:.unshift(File.expand_path('../../lib', __FILE__))
+require 'procodile'
 
 command = ARGV[0]
 
@@ -11,6 +14,12 @@ begin
       options[:root] = root
     end
 
+    if ['start', 'stop', 'restart'].include?(command)
+      opts.on("-p", "--processes a,b,c", "Only #{command} the listed processes or process types") do |processes|
+        options[:processes] = processes
+      end
+    end
+
     if command == 'start'
       opts.on("-f", "--foreground", "Run the supervisor in the foreground") do
         options[:foreground] = true
@@ -19,11 +28,15 @@ begin
       opts.on("--clean", "Remove all previous pid and sock files before starting") do
         options[:clean] = true
       end
-    end
 
-    if ['start', 'stop', 'restart'].include?(command)
-      opts.on("-p", "--processes a,b,c", "Only #{command} the listed processes or process types") do |processes|
-        options[:processes] = processes
+      opts.on("-b", "--brittle", "Kill everything when one process exits") do
+        options[:brittle] = true
+      end
+
+      opts.on("-d", "--dev", "Run in development mode") do
+        options[:development] = true
+        options[:brittle] = true
+        options[:foreground] = true
       end
     end
   end.parse!
@@ -32,10 +45,6 @@ rescue OptionParser::InvalidOption => e
   exit 1
 end
 
-$:.unshift(File.expand_path('../../lib', __FILE__))
-
-require 'fileutils'
-require 'procodile'
 require 'procodile/error'
 require 'procodile/config'
 require 'procodile/cli'
