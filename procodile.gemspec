@@ -11,4 +11,5 @@ Gem::Specification.new do |s|
   s.licenses      = ['MIT']
   s.bindir = "bin"
   s.executables << 'procodile'
+  s.add_runtime_dependency 'json'
 end
