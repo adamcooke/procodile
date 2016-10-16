@@ -1,5 +1,10 @@
+require 'procodile/control_server'
+
 module Procodile
   class Supervisor
+
+    attr_reader :config
+    attr_reader :processes
 
     # Create a new supervisor instance that will be monitoring the
     # processes that have been provided.
@@ -8,10 +13,9 @@ module Procodile
       @processes = {}
 
       signal_handler = SignalHandler.new('TERM', 'USR1', 'USR2', 'INT', 'HUP')
-      signal_handler.register('INT') { stop }
+      signal_handler.register('TERM') { stop }
       signal_handler.register('USR1') { restart }
       signal_handler.register('USR2') { status }
-      signal_handler.register('TERM') { stop_supervisor }
       signal_handler.register('HUP') { reload_config }
     end
 
@@ -20,6 +24,12 @@ module Procodile
       @config.processes.each do |name, process|
         start_instances(process.generate_instances)
       end
+
+      Thread.new do
+        socket = ControlServer.new(self)
+        socket.listen
+      end
+
       supervise
     end
 

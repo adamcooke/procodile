@@ -77,6 +77,10 @@ module Procodile
       File.expand_path(options['log_root'] || 'log', @root)
     end
 
+    def sock_path
+      File.join(pid_root, 'supervisor.sock')
+    end
+
     private
 
     def procfile_path

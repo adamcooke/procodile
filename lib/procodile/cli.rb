@@ -2,6 +2,7 @@ require 'fileutils'
 require 'procodile/error'
 require 'procodile/supervisor'
 require 'procodile/signal_handler'
+require 'procodile/control_client'
 
 module Procodile
   class CLI
@@ -43,7 +44,7 @@ module Procodile
 
     def stop
       if running?
-        ::Process.kill('INT', current_pid)
+        ControlClient.run(@config.sock_path, 'stop')
         puts "Stopping #{@config.app_name} processes & supervisor..."
       else
         raise Error, "#{@config.app_name} supervisor isn't running"
@@ -55,7 +56,7 @@ module Procodile
         puts "This will stop the supervisor only. Any processes that it started will no longer be managed."
         puts "They will need to be stopped manually. \e[34mDo you wish to continue? (yes/NO)\e[0m"
         if ['y', 'yes'].include?($stdin.gets.to_s.strip.downcase)
-          ::Process.kill('TERM', current_pid)
+          ControlClient.run(@config.sock_path, 'stop_supervisor')
           puts "We've asked it to stop. It'll probably be done in a moment."
         else
           puts "OK. That's fine. You can just run `stop` to stop processes too."
@@ -68,7 +69,7 @@ module Procodile
 
     def restart
       if running?
-        ::Process.kill('USR1', current_pid)
+        ControlClient.run(@config.sock_path, 'restart')
         puts "Restarting #{@config.app_name}"
       else
         raise Error, "#{@config.app_name} supervisor isn't running"
@@ -77,7 +78,7 @@ module Procodile
 
     def reload_config
       if running?
-        ::Process.kill('HUP', current_pid)
+        ControlClient.run(@config.sock_path, 'reload_config')
         puts "Reloading config for #{@config.app_name}"
       else
         raise Error, "#{@config.app_name} supervisor isn't running"
@@ -86,9 +87,10 @@ module Procodile
 
     def status
       if running?
-        puts "#{@config.app_name} running (PID: #{current_pid})"
-        ::Process.kill('USR2', current_pid)
-        puts "Instance status details added to #{log_path}"
+        #puts "#{@config.app_name} running (PID: #{current_pid})"
+        #::Process.kill('USR2', current_pid)
+        #puts "Instance status details added to #{log_path}"
+        puts ControlClient.run(@config.sock_path, 'status')
       else
         puts "#{@config.app_name} supervisor not running"
       end
@@ -108,6 +110,17 @@ module Procodile
     end
 
     private
+
+    def send_to_socket(command, options = {})
+
+      socket = UNIXSocket.new(@config.sock_path)
+      # Get the connection confirmation
+      connection = socket.gets
+      return false unless connection == 'READY'
+      # Send a command.
+    ensure
+      socket.close rescue nil
+    end
 
     def running?
       if pid = current_pid
