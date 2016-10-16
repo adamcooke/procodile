@@ -50,7 +50,7 @@ module Procodile
       @stopping = false
       Dir.chdir(@process.config.root) do
         log_file = File.open(self.log_file_path, 'a')
-        @pid = ::Process.spawn({'PID_FILE' => pid_file_path}, @process.command, :out => log_file, :err => log_file)
+        @pid = ::Process.spawn({'PID_FILE' => pid_file_path}, @process.command, :out => log_file, :err => log_file, :pgroup => true)
         Procodile.log(@process.log_color, description, "Started with PID #{@pid}")
         File.open(pid_file_path, 'w') { |f| f.write(@pid.to_s + "\n") }
         ::Process.detach(@pid)
@@ -72,8 +72,7 @@ module Procodile
       @stopping = true
       update_pid
       if self.running?
-        pid = self.pid_from_file
-        Procodile.log(@process.log_color, description, "Sending TERM to #{pid}")
+        Procodile.log(@process.log_color, description, "Sending TERM to #{@pid}")
         ::Process.kill('TERM', pid)
       else
         Procodile.log(@process.log_color, description, "Process already stopped")
