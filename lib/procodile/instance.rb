@@ -202,7 +202,7 @@ module Procodile
             add_respawn
           elsif respawns >= @process.max_respawns
             Procodile.log(@process.log_color, description, "\e[41;37mWarning:\e[0m\e[31m this process has been respawned #{respawns} times and keeps dying.\e[0m")
-            Procodile.log(@process.log_color, description, "It will not be respawned automatically any longer and will no longer be managed.").color(31)
+            Procodile.log(@process.log_color, description, "It will not be respawned automatically any longer and will no longer be managed.".color(31))
             tidy
             unmonitor
           end

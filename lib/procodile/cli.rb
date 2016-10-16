@@ -122,6 +122,7 @@ module Procodile
           puts "||".color(process['log_color']) + " Command        " + process['command']
           puts "||".color(process['log_color']) + " Respawning     " + "#{process['max_respawns']} every #{process['respawn_window']} seconds"
           puts "||".color(process['log_color']) + " Restart mode   " + process['restart_mode']
+          puts "||".color(process['log_color']) + " Log path       " + (process['log_path'] || "none specified")
           stats['instances'][process['name']].each do |instance|
             print "|| ".color(process['log_color']) + instance['description'].to_s.ljust(20, ' ').color(process['log_color'])
             print "pid " + instance['pid'].to_s.ljust(12, ' ')
