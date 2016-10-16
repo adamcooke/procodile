@@ -94,14 +94,8 @@ module Procodile
 
     def stop_supervisor
       if running?
-        puts "This will stop the supervisor only. Any processes that it started will no longer be managed."
-        puts "They will need to be stopped manually. \e[34mDo you wish to continue? (yes/NO)\e[0m"
-        if ['y', 'yes'].include?($stdin.gets.to_s.strip.downcase)
-          ::Process.kill('TERM', current_pid)
-          puts "We've asked it to stop. It'll probably be done in a moment."
-        else
-          puts "OK. That's fine. You can just run `stop` to stop processes too."
-        end
+        ::Process.kill('TERM', current_pid)
+        puts "Supervisor will be stopped in a moment."
       else
         raise Error, "#{@config.app_name} supervisor isn't running"
       end
