@@ -47,6 +47,13 @@ module Procodile
     end
 
     #
+    # Return the signal to send to terminate the process
+    #
+    def term_signal
+      @options['term_signal'] || 'TERM'
+    end
+
+    #
     # Defines how this process should be restarted
     #
     # start-term = start new instances and send term to children

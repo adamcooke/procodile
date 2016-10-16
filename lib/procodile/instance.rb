@@ -108,8 +108,8 @@ module Procodile
       @stopping = true
       update_pid
       if self.running?
-        Procodile.log(@process.log_color, description, "Sending TERM to #{@pid}")
-        ::Process.kill('TERM', pid)
+        Procodile.log(@process.log_color, description, "Sending #{@process.term_signal} to #{@pid}")
+        ::Process.kill(@process.term_signal, pid)
       else
         Procodile.log(@process.log_color, description, "Process already stopped")
       end
@@ -151,8 +151,8 @@ module Procodile
       when 'start-term'
         old_process_pid = @pid
         start
-        Procodile.log(@process.log_color, description, "Sent TERM signal to old PID #{old_process_pid} (forgetting now)")
-        ::Process.kill('TERM', old_process_pid)
+        Procodile.log(@process.log_color, description, "Sent #{@process.term_signal} signal to old PID #{old_process_pid} (forgetting now)")
+        ::Process.kill(@process.term_signal, old_process_pid)
       when 'term-start'
         stop
         Thread.new do

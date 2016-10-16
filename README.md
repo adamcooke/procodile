@@ -166,4 +166,6 @@ processes:
     max_repawns: 10
     # The size of the respawn window (in seconds) (default is 3600)
     respawn_windows: 300
+    # The signal to send to terminate this process (default is TERM)
+    term_signal: INT
 ```
