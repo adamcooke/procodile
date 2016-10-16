@@ -1,0 +1,30 @@
+#!/usr/bin/env ruby
+require 'optparse'
+options = {}
+OptionParser.new do |opts|
+  opts.banner = "Usage: procodile [options]"
+  opts.on("-r", "--root PATH", "The path to the root of your application") do |root|
+    options[:root] = root
+  end
+end.parse!
+
+$:.unshift(File.expand_path('../../lib', __FILE__))
+
+require 'fileutils'
+require 'procodile/error'
+require 'procodile/config'
+require 'procodile/cli'
+
+Thread.abort_on_exception = true
+begin
+
+  config = Procodile::Config.new(options[:root] ? File.expand_path(options[:root]) : FileUtils.pwd)
+  command = ARGV[0]
+
+  cli = Procodile::CLI.new(config)
+  cli.run(command)
+
+rescue Procodile::Error => e
+  $stderr.puts "\e[31merror: #{e.message}\e[0m"
+  exit 1
+end

@@ -1,0 +1,10 @@
+app_name: BananaApp
+processes:
+  web:
+    quantity: 1
+    max_respawns: 2
+  worker:
+    quantity: 1
+    restart_mode: start-term
+  cron:
+    restart_mode: usr1

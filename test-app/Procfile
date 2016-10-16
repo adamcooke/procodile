@@ -1,0 +1,3 @@
+web: ruby web.rb
+worker: ruby worker.rb
+cron: ruby cron.rb
