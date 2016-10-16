@@ -16,7 +16,7 @@ begin
         options[:foreground] = true
       end
 
-      opts.on("--clean", "Remove all previous PIDs before starting") do
+      opts.on("--clean", "Remove all previous pid and sock files before starting") do
         options[:clean] = true
       end
     end
