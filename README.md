@@ -36,7 +36,7 @@ To test things, you don't need any more than this. We'll explore how to make add
 
 ### Starting processes
 
-To start your processes, just run the `procodile start` command. By default, this will run a each of your process types once.
+To start your processes, just run the `procodile start` command. By default, this will run each of your process types once.
 
 ```
 procdile start -r path/to/your/app
@@ -52,9 +52,19 @@ To see what's happening, you'll need to look at the `supervisor.log` file which 
 01:55:05 cron.1          | Started with PID 18124
 ```
 
-Each process will also log its output into the `log` file with the name of the process as the filename. For example `log/web.1.log` will contain the STDOUT/STDERR for the `web.1` process.
+Each process will also log its output into the log file with the name of the process as the filename. For example `log/web.1.log` will contain the STDOUT/STDERR for the `web.1` process.
 
 The PIDs for each of the processes are stored in a `pids` dirctory also in the root of your application. It is important that this folder only contains PID files for processes managed by Procodile. Each process will have an environment variable of `PID_FILE` which contains the path to its own PID file. If you application respawns itself, you'll need to make sure you update this file to contain the new PID so that Procodile can continue to monitor the process.
+
+If you only wish to start a certain type (or types) of process. You can pass the `-p` option with a list of types to start.
+
+```
+procodile start -p web,worker
+```
+
+#### Running in the foreground
+
+You can pass the `--foreground` (or `-f`) to the `start` command. This will keep the Procodile application in the foreground rather than running it in the background. If you CTRL+C while running in the foreground, all processes will be stopped. This can be used for development or when integrating Procodile with another process manager (i.e. upstart or systemd).
 
 ### Stopping processes
 
@@ -67,10 +77,13 @@ procodile stop -r path/to/your/app
 # Stopping cron.1 (PID: 86782)
 ```
 
-The actual Procodile master process won't stop until all of its monitored processes have stopped running. This means that you won't be able to start it again until this finishes. If you need to stop the supervisor, you can do this with the `stop_supervisor` command. Doing this will leave any processes it was managing orphans and will need to be stopped/monitored manually.
+If you only wish to stop a certain process or type of process you can pass the `-p` option with a list of process types or names. In this example, it will stop `web.3` and all worker processes.
 
 ```
-processes stop_supervisor -r path/to/your/app
+procodile start -p web.3,worker
+# Stopping web.3 (PID: 86780)
+# Stopping worker.1 (PID: 86781)
+# Stopping worker.2 (PID: 86782)
 ```
 
 ### Restarting processes
@@ -90,7 +103,7 @@ Restarting processes is a tricky process and there are 4 different modes which y
 * `start-term` - this will start up a new instance of the process, wait 15 seconds and then send a TERM signal to the original process. Note: it doesn't monitor the dead process so it is important that it respects the TERM signal.
 * `usr1` or `usr2` - this will simply send a USR1/USR2 signal to the process and allow it to handle its own restart. It is important that if it changes its process ID it updates the PID file. The path to the PID file is provided in the `PID_FILE` environment variable.
 
-You can see how to choose which mode is used for your processes below.
+As with `stop`, you can pass `-p` to define which types of processes are restarted when you run the command.
 
 ### Getting the status
 
@@ -107,7 +120,7 @@ If you make changes to your `Procfile` or `Procfile.options` files you can push 
 
 ### Killing everything
 
-If you want everything to die forcefully. The `procodile kill` command will be your friend. This will look in your `pids` directory and send `KILL` signals to every process mentioned. This is why it's important that the directory is only used for Procodile managed processes. You probably won't need to use this very often.
+If you want everything to die forcefully. The `procodile kill` command will be your friend. This will look in your `pids` directory and send `KILL` signals to every process mentioned. This is why it's important that the directory is only used for Procodile managed processes. You shouldn't need to use this very often.
 
 ```
 procodile kill -r path/to/your/app
