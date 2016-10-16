@@ -22,32 +22,22 @@ module Procodile
 
     def start
       if running?
-        processes = @cli_options[:processes].split(',')
-        if processes.empty?
-          raise Error, "At least one process must be specified when starting after the supervisor is running"
+        instances = ControlClient.run(@config.sock_path, 'start_processes', :processes => process_names_from_cli_option)
+        if instances.empty?
+          raise Error, "No processes were started. The type you entered might already be running or isn't defined."
         else
-          instances = ControlClient.run(@config.sock_path, 'start_processes', :processes => processes)
-          if instances.empty?
-            raise Error, "No processes were started. The type you entered might already be running or isn't defined."
-          else
-            instances.each do |instance|
-              puts "Started #{instance['description']} (PID: #{instance['pid']})"
-            end
+          instances.each do |instance|
+            puts "Started #{instance['description']} (PID: #{instance['pid']})"
           end
-          return
         end
       end
+
+      processes = process_names_from_cli_option
 
       if @cli_options[:clean]
         FileUtils.rm_f(File.join(@config.pid_root, '*.pid'))
         FileUtils.rm_f(File.join(@config.pid_root, '*.sock'))
         puts "Removed all old pid & sock files"
-      end
-
-      if @cli_options[:processes]
-        processes = @cli_options[:processes].split(',')
-      else
-        processes = nil
       end
 
       if @cli_options[:foreground]
@@ -71,12 +61,7 @@ module Procodile
     def stop
       if running?
         options = {}
-        if @cli_options[:processes]
-          processes = @cli_options[:processes].split(',')
-          instances = ControlClient.run(@config.sock_path, 'stop', :processes => processes)
-        else
-          instances = ControlClient.run(@config.sock_path, 'stop')
-        end
+        instances = ControlClient.run(@config.sock_path, 'stop', :processes => process_names_from_cli_option)
         if instances.empty?
           puts "There are no processes to stop."
         else
@@ -92,13 +77,7 @@ module Procodile
     def restart
       if running?
         options = {}
-        if @cli_options[:processes]
-          processes = @cli_options[:processes].split(',')
-          instances = ControlClient.run(@config.sock_path, 'restart', :processes => processes)
-        else
-          instances = ControlClient.run(@config.sock_path, 'restart')
-        end
-
+        instances = ControlClient.run(@config.sock_path, 'restart', :processes => process_names_from_cli_option)
         if instances.empty?
           puts "There are no processes to restart."
         else
@@ -191,6 +170,24 @@ module Procodile
 
     def log_path
       File.join(@config.log_root, 'supervisor.log')
+    end
+
+    def process_names_from_cli_option
+      if @cli_options[:processes]
+        processes = @cli_options[:processes].split(',')
+        if processes.empty?
+          raise Error, "No process names provided"
+        end
+        processes.each do |process|
+          process_name, _ = process.split('.', 2)
+          unless @config.process_list.keys.include?(process_name.to_s)
+            raise Error, "Process '#{process_name}' is not configured. You may need to reload your config."
+          end
+        end
+        processes
+      else
+        nil
+      end
     end
 
   end
