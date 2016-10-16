@@ -2,7 +2,7 @@
 
 Running & deploying Ruby apps to places like [Viaduct](https://viaduct.io) & Heroku is really easy but running processes on actual servers is less fun. Procodile aims to take some the stress out of running your Ruby/Rails apps and give you some of the useful process management features you get from the takes of the PaaS providers.
 
-Procodile is a bit like [Foreman](https://github.com/ddollar/foreman) but things run in the background and there's a supervisor which keeps an eye on your processes and will respawn them if they die or use too much memory. Just like you're used to.
+Procodile is a bit like [Foreman](https://github.com/ddollar/foreman) but things are designed to run in the background (as well as the foreground if you prefer) and there's a supervisor which keeps an eye on your processes and will respawn them if they die. It also handles orchesting restarts whenever you deploy new code so.
 
 Procodile works out of the box with your existing `Procfile`.
 
@@ -36,18 +36,17 @@ To test things, you don't need any more than this. We'll explore how to make add
 
 ## Using Procodile
 
+The following examples will assume that you have entered the root directory of your application and there's a `Procfile` there.
+
 ### Starting processes
 
-To start your processes, just run the `procodile start` command. By default, this will run each of your process types once.
+To start your processes, just run the `procodile start` command. By default, this will run each of your process types once. If this is your first time running Procodile, it's probably best to start things in the foreground so you can easily see what's going on.
 
 ```
-procdile start -r path/to/your/app
-# Started Procodile with PID 12345
+procodile start -f
 ```
 
-The `-r` option specifies the root of your application. If you don't provide one, your current working directory will be used.
-
-To see what's happening, you'll need to look at the `procodile.log` file which you'll in the root of your application. You'll find a more colourful version of this which shows that each of your processes has been started.
+Your Procfile will now be parsed and the processes started. The output will look a little bit like this:
 
 ```
 18:12:39 system          | BananaApp supervisor started with PID 47052
@@ -58,9 +57,9 @@ To see what's happening, you'll need to look at the `procodile.log` file which y
 18:12:39 cron.1          | Started with PID 47083
 ```
 
-By default, each process's STDOUT and STDERR will be reported back to your `procodile.log`.
+Once everything is running, you can press CTRL+C which will terminate all the processes. To run the commands in the backgrond, just goahead and run the start command without the `-f`. When you do this, all the log output you saw previously will be saved into a `procodile.log` file in the root of your application.
 
-The PIDs for each of the processes are stored in a `pids` dirctory also in the root of your application. It is important that this folder only contains PID files for processes managed by Procodile. Each process will have an environment variable of `PID_FILE` which contains the path to its own PID file. If you application respawns itself, you'll need to make sure you update this file to contain the new PID so that Procodile can continue to monitor the process.
+#### Starting only certain processes
 
 If you only wish to start a certain type (or types) of process. You can pass the `-p` option with a list of types to start.
 
@@ -85,6 +84,8 @@ procodile stop -r path/to/your/app
 # Stopping worker,1 (PID: 86781)
 # Stopping cron.1 (PID: 86782)
 ```
+
+#### Stopping only certain processes
 
 If you only wish to stop a certain process or type of process you can pass the `-p` option with a list of process types or names. In this example, it will stop `web.3` and all worker processes.
 
@@ -129,17 +130,25 @@ If you make changes to your `Procfile` or `Procfile.options` files you can push 
 * If you change a command, the old command will continue to run until you next `restart`.
 * Changes to `app_name`, `log_path` and `pid_root` will not be updated until the supervisor is restarted.
 
+```
+procodile reload_config
+```
+
 ### Killing everything
 
 If you want everything to die forcefully. The `procodile kill` command will be your friend. This will look in your `pids` directory and send `KILL` signals to every process mentioned. This is why it's important that the directory is only used for Procodile managed processes. You shouldn't need to use this very often.
 
 ```
-procodile kill -r path/to/your/app
+procodile kill
 # Sent KILL to 19313 (cron.1)
 # Sent KILL to 19249 (supervisor)
 # Sent KILL to 19314 (web.1)
 # Sent KILL to 19312 (worker.1)
 ```
+
+## PID files
+
+The PIDs for each of the processes are stored in a `pids` dirctory also in the root of your application. It is important that this folder only contains PID files for processes managed by Procodile. Each process will have an environment variable of `PID_FILE` which contains the path to its own PID file. If you application respawns itself, you'll need to make sure you update this file to contain the new PID so that Procodile can continue to monitor the process.
 
 ## Futher configuration
 
