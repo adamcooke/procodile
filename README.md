@@ -45,16 +45,18 @@ procdile start -r path/to/your/app
 # Started Procodile with PID 12345
 ```
 
-To see what's happening, you'll need to look at the `supervisor.log` file which you'll find in a `log` directory in the root of your application. You'll find a more colourful version of this which shows that each of your processes has been started.
+To see what's happening, you'll need to look at the `procodile.log` file which you'll in the root of your application. You'll find a more colourful version of this which shows that each of your processes has been started.
 
 ```
-01:55:05 system          | BananaApp started with PID 18121
-01:55:05 web.1           | Started with PID 18122
-01:55:05 worker.1        | Started with PID 18123
-01:55:05 cron.1          | Started with PID 18124
+18:12:39 system          | BananaApp supervisor started with PID 47052
+18:12:39 control         | Listening at /opt/apps/banana-app/tmp/pids/supervisor.sock
+18:12:39 web.1           | Started with PID 47080
+18:12:39 web.2           | Started with PID 47081
+18:12:39 worker.1        | Started with PID 47082
+18:12:39 cron.1          | Started with PID 47083
 ```
 
-Each process will also log its output into the log file with the name of the process as the filename. For example `log/web.1.log` will contain the STDOUT/STDERR for the `web.1` process.
+By default, each process's STDOUT and STDERR will be reported back to your `procodile.log`.
 
 The PIDs for each of the processes are stored in a `pids` dirctory also in the root of your application. It is important that this folder only contains PID files for processes managed by Procodile. Each process will have an environment variable of `PID_FILE` which contains the path to its own PID file. If you application respawns itself, you'll need to make sure you update this file to contain the new PID so that Procodile can continue to monitor the process.
 
