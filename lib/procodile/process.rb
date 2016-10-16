@@ -57,5 +57,20 @@ module Procodile
       quantity.times.map { |i| Instance.new(self, i + start_number) }
     end
 
+    #
+    # Return a hash
+    #
+    def to_hash
+      {
+        :name => self.name,
+        :log_color => self.log_color,
+        :quantity => self.quantity,
+        :max_respawns => self.max_respawns,
+        :respawn_window => self.respawn_window,
+        :command => self.command,
+        :restart_mode => self.restart_mode
+      }
+    end
+
   end
 end

@@ -243,7 +243,6 @@ module Procodile
     def to_hash
       {
         :description => self.description,
-        :command => @process.command,
         :pid => self.pid,
         :respawns => self.respawns,
         :running => self.running?

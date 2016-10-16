@@ -110,10 +110,22 @@ module Procodile
 
     def status
       if running?
-        #puts "#{@config.app_name} running (PID: #{current_pid})"
-        #::Process.kill('USR2', current_pid)
-        #puts "Instance status details added to #{log_path}"
-        puts ControlClient.run(@config.sock_path, 'status')
+        stats = ControlClient.run(@config.sock_path, 'status')
+        stats['processes'].each_with_index do |process, index|
+          puts unless index == 0
+          puts "|| ".color(process['log_color']) + process['name'].color(process['log_color'])
+          puts "||".color(process['log_color']) + " Quantity       " + process['quantity'].to_s
+          puts "||".color(process['log_color']) + " Command        " + process['command']
+          puts "||".color(process['log_color']) + " Respawning     " + "#{process['max_respawns']} every #{process['respawn_window']} seconds"
+          puts "||".color(process['log_color']) + " Restart mode   " + process['restart_mode']
+          stats['instances'][process['name']].each do |instance|
+            print "|| ".color(process['log_color']) + instance['description'].to_s.ljust(20, ' ').color(process['log_color'])
+            print "pid " + instance['pid'].to_s.ljust(12, ' ')
+            print (instance['running'] ? 'Running' : 'Stopped').to_s.ljust(15, ' ')
+            print instance['respawns'].to_s + " respawns"
+            puts
+          end
+        end
       else
         puts "#{@config.app_name} supervisor not running"
       end

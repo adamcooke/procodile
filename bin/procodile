@@ -35,6 +35,7 @@ end
 $:.unshift(File.expand_path('../../lib', __FILE__))
 
 require 'fileutils'
+require 'procodile'
 require 'procodile/error'
 require 'procodile/config'
 require 'procodile/cli'

@@ -45,11 +45,11 @@ module Procodile
     end
 
     def status(options)
-      status = {}
-      for process, instances in @supervisor.processes
-        status[process.name] = []
-        for instance in instances
-          status[process.name] << {
+      instances = {}
+      @supervisor.processes.each do |process, process_instances|
+        instances[process.name] = []
+        for instance in process_instances
+          instances[process.name] << {
             :description => instance.description,
             :pid => instance.pid,
             :running => instance.running?,
@@ -58,7 +58,10 @@ module Procodile
           }
         end
       end
-      "200 #{status.to_json}"
+
+      processes = @supervisor.processes.keys.map(&:to_hash)
+      result = {:instances => instances, :processes => processes}
+      "200 #{result.to_json}"
     end
 
   end

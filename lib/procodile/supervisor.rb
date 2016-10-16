@@ -91,19 +91,6 @@ module Procodile
       ::Process.exit 0
     end
 
-    def status
-      Procodile.log '37;44', 'status', "Status as at: #{Time.now.utc.to_s}"
-      @processes.each do |_, instances|
-        instances.each do |instance|
-          if instance.running?
-            Procodile.log '37;44', 'status', "#{instance.description} is RUNNING (pid #{instance.pid}). Respawned #{instance.respawns} time(s)"
-          else
-            Procodile.log '37;44', 'status', "#{instance.description} is STOPPED"
-          end
-        end
-      end
-    end
-
     def supervise
       loop do
         # Tidy up any instances that we no longer wish to be managed. They will
