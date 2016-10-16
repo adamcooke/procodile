@@ -24,9 +24,9 @@ module Procodile
       @options = nil
       @process_options = nil
 
-      # Update the commands for processes
       process_list.each do |name, command|
         if process = @processes[name]
+          # This command is already in our list. Add it.
           if process.command != command
             process.command = command
             Procodile.log nil, 'system', "#{name} command has changed. Updated."
@@ -37,10 +37,10 @@ module Procodile
           else
             process.options = {}
           end
-
         else
-          Procodile.log nil, 'system', "#{name} is no longer in the Procfile. Removing it."
-          @process.delete(name)
+          Procodile.log nil, 'system', "#{name} has been added to the Procfile. Adding it."
+          @processes[name] = Process.new(self, name, command, process_options[name] || {})
+          @processes[name].log_color = COLORS[@processes.size.divmod(COLORS.size)[1]]
         end
       end
 

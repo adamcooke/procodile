@@ -29,6 +29,7 @@ module Procodile
           instances.each do |instance|
             puts "Started #{instance['description']} (PID: #{instance['pid']})"
           end
+          return
         end
       end
 
