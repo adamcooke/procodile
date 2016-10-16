@@ -23,28 +23,27 @@ module Procodile
       if running?
         raise Error, "#{@config.app_name} already running (PID: #{current_pid})"
       end
-      FileUtils.rm_f(File.join(@config.pid_root, "*.pid"))
-      pid = fork do
-        STDOUT.reopen(log_path, 'a')
-        STDOUT.sync = true
-        STDERR.reopen(log_path, 'a')
-        STDERR.sync = true
-        supervisor = Supervisor.new(@config)
-        signal_handler = SignalHandler.new('TERM', 'USR1', 'USR2', 'INT', 'HUP')
-        signal_handler.register('TERM') { supervisor.stop }
-        signal_handler.register('USR1') { supervisor.restart }
-        signal_handler.register('USR2') { supervisor.status }
-        signal_handler.register('INT') { supervisor.stop_supervisor }
-        supervisor.start
+      if @cli_options[:foreground]
+        File.open(pid_path, 'w') { |f| f.write(::Process.pid) }
+        Supervisor.new(@config).start
+      else
+        FileUtils.rm_f(File.join(@config.pid_root, "*.pid"))
+        pid = fork do
+          STDOUT.reopen(log_path, 'a')
+          STDOUT.sync = true
+          STDERR.reopen(log_path, 'a')
+          STDERR.sync = true
+          Supervisor.new(@config).start
+        end
+        ::Process.detach(pid)
+        File.open(pid_path, 'w') { |f| f.write(pid) }
+        puts "Started #{@config.app_name} supervisor with PID #{pid}"
       end
-      ::Process.detach(pid)
-      File.open(pid_path, 'w') { |f| f.write(pid) }
-      puts "Started #{@config.app_name} supervisor with PID #{pid}"
     end
 
     def stop
       if running?
-        ::Process.kill('TERM', current_pid)
+        ::Process.kill('INT', current_pid)
         puts "Stopping #{@config.app_name} processes & supervisor..."
       else
         raise Error, "#{@config.app_name} supervisor isn't running"
@@ -56,7 +55,7 @@ module Procodile
         puts "This will stop the supervisor only. Any processes that it started will no longer be managed."
         puts "They will need to be stopped manually. \e[34mDo you wish to continue? (yes/NO)\e[0m"
         if ['y', 'yes'].include?($stdin.gets.to_s.strip.downcase)
-          ::Process.kill('INT', current_pid)
+          ::Process.kill('TERM', current_pid)
           puts "We've asked it to stop. It'll probably be done in a moment."
         else
           puts "OK. That's fine. You can just run `stop` to stop processes too."

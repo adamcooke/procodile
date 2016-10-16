@@ -10,6 +10,12 @@ begin
     opts.on("-r", "--root PATH", "The path to the root of your application") do |root|
       options[:root] = root
     end
+
+    if command == 'start'
+      opts.on("-f", "--foreground", "Run the supervisor in the foreground") do
+        options[:foreground] = true
+      end
+    end
   end.parse!
 rescue OptionParser::InvalidOption => e
   $stderr.puts "\e[31merror: #{e.message}\e[0m"
