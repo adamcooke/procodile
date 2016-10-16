@@ -12,8 +12,13 @@ module Procodile
       command, options = data.split(/\s+/, 2)
       options = JSON.parse(options)
       if self.class.instance_methods(false).include?(command.to_sym) && command != 'receive_data'
-        Procodile.log nil, 'control', "Received stop command"
-        public_send(command, options)
+        begin
+          Procodile.log nil, 'control', "Received #{command} command"
+          public_send(command, options)
+        rescue Procodile::Error => e
+          Procodile.log nil, 'control', "\e[31mError: #{e.message}\e[0m"
+          "500 #{e.message}"
+        end
       else
         "404 Invaid command"
       end
