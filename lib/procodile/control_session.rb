@@ -30,7 +30,7 @@ module Procodile
     end
 
     def stop(options)
-      instances = @supervisor.stop(:processes => options['processes'])
+      instances = @supervisor.stop(:processes => options['processes'], :stop_supervisor => options['stop_supervisor'])
       "200 " + instances.map(&:to_hash).to_json
     end
 

@@ -33,10 +33,21 @@ begin
         options[:brittle] = true
       end
 
+      opts.on("--stop-when-none", "Stop the supervisor when all processes are stopped") do
+        options[:stop_when_none] = true
+      end
+
       opts.on("-d", "--dev", "Run in development mode") do
         options[:development] = true
         options[:brittle] = true
         options[:foreground] = true
+        options[:stop_when_none] = true
+      end
+    end
+
+    if command == 'stop'
+      opts.on("-s", "--stop-supervisor", "Stop the ") do
+        options[:stop_supervisor] = true
       end
     end
 

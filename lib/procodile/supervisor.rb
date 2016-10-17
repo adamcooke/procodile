@@ -14,7 +14,7 @@ module Procodile
       @readers = {}
       @signal_handler = SignalHandler.new('TERM', 'USR1', 'USR2', 'INT', 'HUP')
       @signal_handler.register('TERM') { stop_supervisor }
-      @signal_handler.register('INT') { stop }
+      @signal_handler.register('INT') { stop(:stop_supervisor => true) }
       @signal_handler.register('USR1') { restart }
       @signal_handler.register('USR2') { status }
       @signal_handler.register('HUP') { reload_config }
@@ -47,17 +47,19 @@ module Procodile
     end
 
     def stop(options = {})
+      if options[:stop_supervisor]
+        @run_options[:stop_when_none] = true
+      end
+
       Array.new.tap do |instances_stopped|
         if options[:processes].nil?
-          return if @stopping
-          @stopping = true
           Procodile.log nil, "system", "Stopping all #{@config.app_name} processes"
-            @processes.each do |_, instances|
-              instances.each do |instance|
-                instance.stop
-                instances_stopped << instance
-              end
+          @processes.each do |_, instances|
+            instances.each do |instance|
+              instance.stop
+              instances_stopped << instance
             end
+          end
         else
           instances = process_names_to_instances(options[:processes])
           Procodile.log nil, "system", "Stopping #{instances.size} process(es)"
@@ -80,6 +82,7 @@ module Procodile
               instances_restarted << instance
             end
           end
+          instances_restarted.push(*check_instance_quantities[:started])
         else
           instances = process_names_to_instances(options[:processes])
           Procodile.log nil, "system", "Restarting #{instances.size} process(es)"
@@ -87,6 +90,7 @@ module Procodile
             instance.restart
             instances_restarted << instance
           end
+          instances_restarted.push(*check_instance_quantities(options[:processes])[:started])
         end
       end
     end
@@ -118,10 +122,12 @@ module Procodile
         end
       end
 
-      # If the processes go away, we can stop the supervisor now
-      if @processes.all? { |_,instances| instances.size == 0 }
-        Procodile.log nil, "system", "All processes have stopped"
-        stop_supervisor
+      if @run_options[:stop_when_none]
+        # If the processes go away, we can stop the supervisor now
+        if @processes.all? { |_,instances| instances.size == 0 }
+          Procodile.log nil, "system", "All processes have stopped"
+          stop_supervisor
+        end
       end
     end
 
@@ -139,6 +145,11 @@ module Procodile
     end
 
     private
+
+    def add_reader(instance, io)
+      @readers[io] = instance
+      @signal_handler.notice
+    end
 
     def watch_for_output
       Thread.new do
@@ -164,17 +175,20 @@ module Procodile
       end
     end
 
-    def check_instance_quantities
-      @processes.each do |process, instances|
-        if instances.size > process.quantity
-          quantity_to_stop = instances.size - process.quantity
-          Procodile.log nil, "system", "Stopping #{quantity_to_stop} #{process.name} process(es)"
-          instances.last(quantity_to_stop).each(&:stop)
-        elsif instances.size < process.quantity
-          quantity_needed = process.quantity - instances.size
-          start_id = instances.last ? instances.last.id + 1 : 1
-          Procodile.log nil, "system", "Starting #{quantity_needed} more #{process.name} process(es) (start with #{start_id})"
-          start_instances(process.generate_instances(quantity_needed, start_id))
+    def check_instance_quantities(processes = nil)
+      {:started => [], :stopped => []}.tap do |status|
+        @processes.each do |process, instances|
+          next if processes && !processes.include?(process.name)
+          if instances.size > process.quantity
+            quantity_to_stop = instances.size - process.quantity
+            Procodile.log nil, "system", "Stopping #{quantity_to_stop} #{process.name} process(es)"
+            status[:stopped] = instances.last(quantity_to_stop).each(&:stop)
+          elsif instances.size < process.quantity
+            quantity_needed = process.quantity - instances.size
+            start_id = instances.last ? instances.last.id + 1 : 1
+            Procodile.log nil, "system", "Starting #{quantity_needed} more #{process.name} process(es) (start with #{start_id})"
+            status[:started] = start_instances(process.generate_instances(quantity_needed, start_id))
+          end
         end
       end
     end
@@ -185,7 +199,7 @@ module Procodile
           instance.respawnable = false
         end
         io = instance.start
-        @readers[io] = instance if io
+        add_reader(instance, io) if io
         @processes[instance.process] ||= []
         @processes[instance.process] << instance
       end

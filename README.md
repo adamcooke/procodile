@@ -59,20 +59,14 @@ Your Procfile will now be parsed and the processes started. The output will look
 
 Once everything is running, you can press CTRL+C which will terminate all the processes. To run the commands in the backgrond, just goahead and run the start command without the `-f`. When you do this, all the log output you saw previously will be saved into a `procodile.log` file in the root of your application.
 
-#### Starting only certain processes
-
-If you only wish to start a certain type (or types) of process. You can pass the `-p` option with a list of types to start.
-
-```
-procodile start -p web,worker
-```
-
 #### Additional options for start
 
+* `-p` or `--processes` - by default all process types will be started, if you'd prefer to only start  certain processes you can pass a list here. For example `web,worker,cron`.
 * `-f` or `--foreground` - this will keep the Procodile application in the foreground rather than running it in the background. If you CTRL+C while running in the foreground, all processes will be stopped.
 * `--clean` - this will remove the contents of your `pids` directory before starting. This avoids the supervisor picking up any old processes and managing them when it shouldn't.
 * `-b` or `--brittle` - when enabled, if a single process dies, rather than respawning, all processes will be stopped and the supervisor shutdown.
-* `-d` or `--dev` - this is the same as specifying `--foreground` and `--brittle`. It's ideal when you want to run your application in the foreground when developing it because processes with issues won't just be started blindly.
+* `--stop-when-none` - when enabled, the supervisor process will be stopped when there are no processes monitored.
+* `-d` or `--dev` - this is the same as specifying `--foreground`, `--brittle` and `--stop-when-none`. It's ideal when you want to run your application in the foreground when developing it because processes with issues won't just be started blindly.
 
 ### Stopping processes
 
@@ -96,6 +90,11 @@ procodile stop -p web.3,worker
 # Stopping worker.2 (PID: 86782)
 ```
 
+#### Additional options for stop
+
+* `-p` or `--processes` - by default all process types will be stopped, if you'd prefer to only stop certain processes you can pass a list here. You can stop individual types or instances. For example `web.2,worker` to stop the web.2 process and all worker processes.
+* `-s` or `--stop-supervisor` - when stopping, the supervisor will remain running but if you'd like to stop it when all processes are stopped you can pass this option.
+
 ### Restarting processes
 
 The most common command you'll use is `restart`. Each time your deploy your application or make changes to your code, you can restart all the processes managed by Procodile.
@@ -113,7 +112,9 @@ Restarting processes is a tricky process and there are 4 different modes which y
 * `start-term` - this will start up a new instance of the process, wait 15 seconds and then send a TERM signal to the original process. Note: it doesn't monitor the dead process so it is important that it respects the TERM signal.
 * `usr1` or `usr2` - this will simply send a USR1/USR2 signal to the process and allow it to handle its own restart. It is important that if it changes its process ID it updates the PID file. The path to the PID file is provided in the `PID_FILE` environment variable.
 
-As with `stop`, you can pass `-p` to define which types of processes are restarted when you run the command.
+#### Additional options for restart
+
+* `-p` or `--processes` - by default all process types will be restarted, if you'd prefer to only restart certain processes you can pass a list here. You can restart individual types or instances. For example `web.2,worker` to restart the web.2 process and all worker processes.
 
 ### Getting the status
 

@@ -35,6 +35,7 @@ module Procodile
 
       run_options = {}
       run_options[:brittle] = @cli_options[:brittle]
+      run_options[:stop_when_none] = @cli_options[:stop_when_none]
 
       processes = process_names_from_cli_option
 
@@ -65,7 +66,7 @@ module Procodile
     def stop
       if running?
         options = {}
-        instances = ControlClient.run(@config.sock_path, 'stop', :processes => process_names_from_cli_option)
+        instances = ControlClient.run(@config.sock_path, 'stop', :processes => process_names_from_cli_option, :stop_supervisor => @cli_options[:stop_supervisor])
         if instances.empty?
           puts "There are no processes to stop."
         else
