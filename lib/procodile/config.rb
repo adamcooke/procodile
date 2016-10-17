@@ -21,7 +21,8 @@ module Procodile
       @process_list = nil
       @options = nil
       @process_options = nil
-      @concurrency = nil
+      @local_options = nil
+      @local_process_options = nil
 
       process_list.each do |name, command|
         if process = @processes[name]
@@ -30,12 +31,7 @@ module Procodile
             process.command = command
             Procodile.log nil, 'system', "#{name} command has changed. Updated."
           end
-
-          if process_options[name].is_a?(Hash)
-            process.options = process_options[name]
-          else
-            process.options = {}
-          end
+          process.options = options_for_process(name)
         else
           Procodile.log nil, 'system', "#{name} has been added to the Procfile. Adding it."
           @processes[name] = create_process(name, command, COLORS[@processes.size.divmod(COLORS.size)[1]])
@@ -45,7 +41,7 @@ module Procodile
     end
 
     def app_name
-      @app_name ||= options['app_name'] || 'Procodile'
+      @app_name ||= local_options['app_name'] || options['app_name'] || 'Procodile'
     end
 
     def processes
@@ -66,16 +62,24 @@ module Procodile
       @process_options ||= options['processes'] || {}
     end
 
-    def concurrency
-      @concurrency ||= File.exist?(concurrency_path) ? YAML.load_file(concurrency_path) : {}
+    def local_options
+      @local_options ||= File.exist?(local_options_path) ? YAML.load_file(local_options_path) : {}
+    end
+
+    def local_process_options
+      @local_process_options ||= local_options['processes'] || {}
+    end
+
+    def options_for_process(name)
+      (process_options[name] || {}).merge(local_process_options[name] || {})
     end
 
     def pid_root
-      @pid_root ||= File.expand_path(options['pid_root'] || 'pids', @root)
+      @pid_root ||= File.expand_path(local_options['pid_root'] || options['pid_root'] || 'pids', @root)
     end
 
     def log_path
-      @log_path ||= File.expand_path(options['log_path'] || 'procodile.log', @root)
+      @log_path ||= File.expand_path(local_options['log_path'] || options['log_path'] || 'procodile.log', @root)
     end
 
     def sock_path
@@ -92,14 +96,13 @@ module Procodile
       File.join(@root, 'Procfile.options')
     end
 
-    def concurrency_path
-      File.join(@root, 'Procfile.concurrency')
+    def local_options_path
+      File.join(@root, 'Procfile.local')
     end
 
     def create_process(name, command, log_color)
-      process = Process.new(self, name, command, process_options[name] || {})
+      process = Process.new(self, name, command, options_for_process(name))
       process.log_color = log_color
-      process.quantity = concurrency[name] || (process_options[name] ? process_options[name]['quantity'] : nil)
       process
     end
 
