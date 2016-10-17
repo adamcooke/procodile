@@ -5,8 +5,8 @@ processes:
     max_respawns: 2
     #log_path: log/webwebweb.log
   worker:
-    quantity: 1
+    quantity: 0
     restart_mode: start-term
   cron:
-    quantity: 1
+    quantity: 0
     restart_mode: usr1

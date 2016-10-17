@@ -1,0 +1,3 @@
+processes:
+  web:
+    quantity: 3

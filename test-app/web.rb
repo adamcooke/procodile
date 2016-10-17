@@ -1,4 +1,4 @@
-trap("TERM", proc { Process.exit(0) })
+trap("TERM", proc { puts "Exiting..." ; Process.exit(0) })
 
 puts "Web server running on port 5000. \n Isn't this nice?\n This is on multiple lines."
 $stdout.flush
