@@ -179,3 +179,5 @@ processes:
     # The signal to send to terminate this process (default is TERM)
     term_signal: INT
 ```
+
+It is recommended to create and commit a `Procfile.options` file for your application. If changes are needed (for example to increase or decrease a process quantity), a `Procfile.local` file can be added on a per-installation basis to change this.
