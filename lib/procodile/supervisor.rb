@@ -5,6 +5,7 @@ module Procodile
 
     attr_reader :config
     attr_reader :processes
+    attr_reader :started_at
 
     def initialize(config, run_options = {})
       @config = config
@@ -30,6 +31,7 @@ module Procodile
       end
       start_processes(options[:processes])
       watch_for_output
+      @started_at = Time.now
       loop { supervise; sleep 3 }
     end
 
@@ -127,6 +129,13 @@ module Procodile
       Procodile.log nil, "system", "Reloading configuration"
       @config.reload
       check_instance_quantities
+    end
+
+    def to_hash
+      {
+        :started_at => @started_at ? @started_at.to_i : nil,
+        :pid => ::Process.pid
+      }
     end
 
     private

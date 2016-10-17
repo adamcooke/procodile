@@ -60,7 +60,11 @@ module Procodile
       end
 
       processes = @supervisor.processes.keys.map(&:to_hash)
-      result = {:instances => instances, :processes => processes}
+      result = {
+        :supervisor => @supervisor.to_hash,
+        :instances => instances,
+        :processes => processes
+      }
       "200 #{result.to_json}"
     end
 

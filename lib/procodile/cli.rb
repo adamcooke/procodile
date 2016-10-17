@@ -115,6 +115,13 @@ module Procodile
     def status
       if running?
         stats = ControlClient.run(@config.sock_path, 'status')
+        puts "|| supervisor pid #{stats['supervisor']['pid']}"
+        if time = stats['supervisor']['started_at']
+          time = Time.at(time)
+          puts "|| supervisor started at #{time.to_s}"
+        end
+        puts
+
         stats['processes'].each_with_index do |process, index|
           puts unless index == 0
           puts "|| ".color(process['log_color']) + process['name'].color(process['log_color'])
