@@ -78,7 +78,7 @@ module Procodile
           Procodile.log nil, "system", "Restarting all #{@config.app_name} processes"
           @processes.each do |_, instances|
             instances.each do |instance|
-              instance.restart
+              instance.restart { |_, io| add_reader(instance, io) }
               instances_restarted << instance
             end
           end
@@ -87,7 +87,7 @@ module Procodile
           instances = process_names_to_instances(options[:processes])
           Procodile.log nil, "system", "Restarting #{instances.size} process(es)"
           instances.each do |instance|
-            instance.restart
+            instance.restart { |_, io| add_reader(instance, io) }
             instances_restarted << instance
           end
           instances_restarted.push(*check_instance_quantities(options[:processes])[:started])
@@ -147,6 +147,7 @@ module Procodile
     private
 
     def add_reader(instance, io)
+      return unless io
       @readers[io] = instance
       @signal_handler.notice
     end
@@ -156,6 +157,7 @@ module Procodile
         loop do
           io = IO.select([@signal_handler.pipe[:reader]] + @readers.keys, nil, nil, 30)
           @signal_handler.handle
+
           if io
             io.first.each do |reader|
               if reader == @signal_handler.pipe[:reader]
@@ -202,8 +204,7 @@ module Procodile
         if @run_options[:brittle]
           instance.respawnable = false
         end
-        io = instance.start
-        add_reader(instance, io) if io
+        instance.start { |_, io| add_reader(instance, io) }
         @processes[instance.process] ||= []
         @processes[instance.process] << instance
       end

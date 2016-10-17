@@ -65,7 +65,7 @@ module Procodile
     #
     # Start a new instance of this process
     #
-    def start
+    def start(&block)
       @stopping = false
       existing_pid = self.pid_from_file
       if running?(existing_pid)
@@ -91,6 +91,11 @@ module Procodile
         File.open(pid_file_path, 'w') { |f| f.write(@pid.to_s + "\n") }
         ::Process.detach(@pid)
         @started_at = Time.now
+
+        if block_given?
+          block.call(self, return_value)
+        end
+
         return_value
       end
     end
@@ -138,7 +143,7 @@ module Procodile
     #
     # Retarts the process using the appropriate method from the process configuraiton
     #
-    def restart
+    def restart(&block)
       Procodile.log(@process.log_color, description, "Restarting using #{@process.restart_mode} mode")
       @restarting = true
       update_pid
@@ -149,11 +154,11 @@ module Procodile
           Procodile.log(@process.log_color, description, "Sent #{@process.restart_mode.upcase} signal to process #{@pid}")
         else
           Procodile.log(@process.log_color, description, "Process not running already. Starting it.")
-          start
+          start(&block)
         end
       when 'start-term'
         old_process_pid = @pid
-        start
+        start(&block)
         Procodile.log(@process.log_color, description, "Sent #{@process.term_signal} signal to old PID #{old_process_pid} (forgetting now)")
         ::Process.kill(@process.term_signal, old_process_pid)
       when 'term-start'
@@ -161,7 +166,7 @@ module Procodile
         Thread.new do
           # Wait for this process to stop and when it has, run it.
           sleep 0.5 while running?
-          start
+          start(&block)
         end
       end
     ensure
