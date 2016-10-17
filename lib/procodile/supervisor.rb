@@ -158,7 +158,11 @@ module Procodile
           @signal_handler.handle
           if io
             io.first.each do |reader|
-              next if reader == @signal_handler.pipe[:reader]
+              if reader == @signal_handler.pipe[:reader]
+                @signal_handler.pipe[:reader].read_nonblock(999) rescue nil
+                next
+              end
+
               if reader.eof?
                 @readers.delete(reader)
               else
