@@ -13,6 +13,7 @@ module Procodile
       @id = id
       @respawns = 0
       @respawnable = true
+      @started_at = nil
     end
 
     #
@@ -72,6 +73,7 @@ module Procodile
         # to monitor this process rather than spawning a new one.
         @pid = existing_pid
         Procodile.log(@process.log_color, description, "Already running with PID #{@pid}")
+        @started_at = File.mtime(self.pid_file_path)
         nil
       else
         if self.process.log_path
@@ -88,7 +90,7 @@ module Procodile
         Procodile.log(@process.log_color, description, "Started with PID #{@pid}")
         File.open(pid_file_path, 'w') { |f| f.write(@pid.to_s + "\n") }
         ::Process.detach(@pid)
-
+        @started_at = Time.now
         return_value
       end
     end
@@ -120,6 +122,7 @@ module Procodile
     # started again
     #
     def on_stop
+      @started_at = nil
       tidy
       unmonitor
     end
@@ -259,7 +262,8 @@ module Procodile
         :description => self.description,
         :pid => self.pid,
         :respawns => self.respawns,
-        :running => self.running?
+        :running => self.running?,
+        :started_at => @started_at ? @started_at.to_i : nil
       }
     end
 

@@ -49,13 +49,7 @@ module Procodile
       @supervisor.processes.each do |process, process_instances|
         instances[process.name] = []
         for instance in process_instances
-          instances[process.name] << {
-            :description => instance.description,
-            :pid => instance.pid,
-            :running => instance.running?,
-            :respawns => instance.respawns,
-            :command => instance.process.command
-          }
+          instances[process.name] << instance.to_hash
         end
       end
 

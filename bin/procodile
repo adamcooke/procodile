@@ -39,6 +39,12 @@ begin
         options[:foreground] = true
       end
     end
+
+    if command == 'status'
+      opts.on("--json", "Return the status as a JSON hash") do
+        options[:json] = true
+      end
+    end
   end.parse!
 rescue OptionParser::InvalidOption => e
   $stderr.puts "Error: #{e.message}".color(31)
