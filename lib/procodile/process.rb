@@ -8,6 +8,7 @@ module Procodile
     attr_accessor :command
     attr_accessor :options
     attr_accessor :log_color
+    attr_accessor :quantity
 
     def initialize(config, name, command, options = {})
       @config = config
@@ -21,7 +22,7 @@ module Procodile
     # How many instances of this process should be started
     #
     def quantity
-      @options['quantity'] || 1
+      @quantity || 1
     end
 
     #

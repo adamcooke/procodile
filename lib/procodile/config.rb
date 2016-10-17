@@ -21,6 +21,7 @@ module Procodile
       @process_list = nil
       @options = nil
       @process_options = nil
+      @concurrency = nil
 
       process_list.each do |name, command|
         if process = @processes[name]
@@ -37,8 +38,7 @@ module Procodile
           end
         else
           Procodile.log nil, 'system', "#{name} has been added to the Procfile. Adding it."
-          @processes[name] = Process.new(self, name, command, process_options[name] || {})
-          @processes[name].log_color = COLORS[@processes.size.divmod(COLORS.size)[1]]
+          @processes[name] = create_process(name, command, COLORS[@processes.size.divmod(COLORS.size)[1]])
         end
       end
 
@@ -50,8 +50,7 @@ module Procodile
 
     def processes
       @processes ||= process_list.each_with_index.each_with_object({}) do |((name, command), index), hash|
-        hash[name] = Process.new(self, name, command, process_options[name] || {})
-        hash[name].log_color = COLORS[index.divmod(COLORS.size)[1]]
+        hash[name] = create_process(name, command, COLORS[index.divmod(COLORS.size)[1]])
       end
     end
 
@@ -65,6 +64,10 @@ module Procodile
 
     def process_options
       @process_options ||= options['processes'] || {}
+    end
+
+    def concurrency
+      @concurrency ||= File.exist?(concurrency_path) ? YAML.load_file(concurrency_path) : {}
     end
 
     def pid_root
@@ -87,6 +90,17 @@ module Procodile
 
     def options_path
       File.join(@root, 'Procfile.options')
+    end
+
+    def concurrency_path
+      File.join(@root, 'Procfile.concurrency')
+    end
+
+    def create_process(name, command, log_color)
+      process = Process.new(self, name, command, process_options[name] || {})
+      process.log_color = log_color
+      process.quantity = concurrency[name] || (process_options[name] ? process_options[name]['quantity'] : nil)
+      process
     end
 
   end
