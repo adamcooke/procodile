@@ -36,6 +36,7 @@ module Procodile
     end
 
     def start_processes(types = [])
+      @config.reload
       Array.new.tap do |instances_started|
         @config.processes.each do |name, process|
           next if types && !types.include?(name.to_s) # Not a process we want

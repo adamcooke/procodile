@@ -24,20 +24,21 @@ module Procodile
       @local_options = nil
       @local_process_options = nil
 
-      process_list.each do |name, command|
-        if process = @processes[name]
-          # This command is already in our list. Add it.
-          if process.command != command
-            process.command = command
-            Procodile.log nil, 'system', "#{name} command has changed. Updated."
+      if @processes
+        process_list.each do |name, command|
+          if process = @processes[name]
+            # This command is already in our list. Add it.
+            if process.command != command
+              process.command = command
+              Procodile.log nil, 'system', "#{name} command has changed. Updated."
+            end
+            process.options = options_for_process(name)
+          else
+            Procodile.log nil, 'system', "#{name} has been added to the Procfile. Adding it."
+            @processes[name] = create_process(name, command, COLORS[@processes.size.divmod(COLORS.size)[1]])
           end
-          process.options = options_for_process(name)
-        else
-          Procodile.log nil, 'system', "#{name} has been added to the Procfile. Adding it."
-          @processes[name] = create_process(name, command, COLORS[@processes.size.divmod(COLORS.size)[1]])
         end
       end
-
     end
 
     def app_name
