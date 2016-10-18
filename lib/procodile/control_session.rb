@@ -59,7 +59,8 @@ module Procodile
         :app_name => @supervisor.config.app_name,
         :supervisor => @supervisor.to_hash,
         :instances => instances,
-        :processes => processes
+        :processes => processes,
+        :environment_variables => @supervisor.config.environment_variables
       }
       "200 #{result.to_json}"
     end
