@@ -1,4 +1,5 @@
 require 'json'
+require 'procodile/version'
 
 module Procodile
   class ControlSession
@@ -62,6 +63,7 @@ module Procodile
 
       processes = @supervisor.processes.keys.map(&:to_hash)
       result = {
+        :version => Procodile::VERSION,
         :root => @supervisor.config.root,
         :app_name => @supervisor.config.app_name,
         :supervisor => @supervisor.to_hash,
