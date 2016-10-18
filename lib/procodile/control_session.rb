@@ -44,6 +44,13 @@ module Procodile
       "200"
     end
 
+    def check_concurrency(options)
+      result = @supervisor.check_concurrency(:reload => options['reload'])
+      result = result.each_with_object({}) { |(type, instances), hash| hash[type] = instances.map(&:to_hash) }
+      "200 #{result.to_json}"
+    end
+
+
     def status(options)
       instances = {}
       @supervisor.processes.each do |process, process_instances|

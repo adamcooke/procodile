@@ -53,7 +53,7 @@ module Procodile
       puts "The following commands are supported:"
       puts
       self.class.commands.each do |method, options|
-        puts "  \e[34m#{method.to_s.ljust(15, ' ')}\e[0m #{options[:description]}"
+        puts "  \e[34m#{method.to_s.ljust(18, ' ')}\e[0m #{options[:description]}"
       end
       puts
       puts "For details for the options available for each command, use the --help option."
@@ -211,10 +211,39 @@ module Procodile
     #
 
     desc "Reload Procodile configuration"
-    command def reload_config
+    command def reload
       if running?
         ControlClient.run(@config.sock_path, 'reload_config')
-        puts "Reloading config for #{@config.app_name}"
+        puts "Reloaded config for #{@config.app_name}"
+      else
+        raise Error, "#{@config.app_name} supervisor isn't running"
+      end
+    end
+
+    #
+    # Check process concurrency
+    #
+
+    desc "Check process concurrency"
+    options do |opts, cli|
+      opts.on("--no-reload", "Do not reload the configuration before checking") do |processes|
+        cli.options[:reload] = false
+      end
+    end
+    command def check_concurrency
+      if running?
+        reply = ControlClient.run(@config.sock_path, 'check_concurrency', :reload => @options[:reload])
+        if reply['started'].empty? && reply['stopped'].empty?
+          puts "Everything looks good!"
+        else
+          reply['started'].each do |instance|
+            puts "Started #{instance['description']}".color(32)
+          end
+
+          reply['stopped'].each do |instance|
+            puts "Stopped #{instance['description']}".color(31)
+          end
+        end
       else
         raise Error, "#{@config.app_name} supervisor isn't running"
       end

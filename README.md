@@ -13,7 +13,13 @@ Procodile works out of the box with your existing `Procfile`.
 To get started, just install the Procodile gem on your server (or local machine). It is recommended to install Procodile as a system gem rather than as part of an existing bundle.
 
 ```
-[sudo] gem install procodile
+$ [sudo] gem install procodile
+```
+
+Check everything is working OK by running `procodile`. This will show you the help menu.
+
+```
+$ procodile
 ```
 
 ## Configuring your application
@@ -37,7 +43,7 @@ The following examples will assume that you have entered the root directory of y
 To start your processes, just run the `procodile start` command. By default, this will run each of your process types once. If this is your first time running Procodile, it's probably best to start things in the foreground so you can easily see what's going on.
 
 ```
-procodile start -f
+$ procodile start --foreground
 ```
 
 Your Procfile will now be parsed and the processes started. The output will look a little bit like this:
@@ -67,21 +73,15 @@ Once everything is running, you can press CTRL+C which will terminate all the pr
 To stop your proceses, just run the `procodile stop` command. This will send a `TERM` signal to each of your applications.
 
 ```
-procodile stop -r path/to/your/app
-# Stopping web.1 (PID: 86780)
-# Stopping worker,1 (PID: 86781)
-# Stopping cron.1 (PID: 86782)
+$ procodile stop
 ```
 
 #### Stopping only certain processes
 
-If you only wish to stop a certain process or type of process you can pass the `-p` option with a list of process types or names. In this example, it will stop `web.3` and all worker processes.
+If you only wish to stop a certain process or type of process you can pass the `--processes` option with a list of process types or names. In this example, it will stop `web.3` and all worker processes.
 
 ```
-procodile stop -p web.3,worker
-# Stopping web.3 (PID: 86780)
-# Stopping worker.1 (PID: 86781)
-# Stopping worker.2 (PID: 86782)
+$ procodile stop --processes web.3,worker
 ```
 
 #### Additional options for stop
@@ -94,10 +94,7 @@ procodile stop -p web.3,worker
 The most common command you'll use is `restart`. Each time your deploy your application or make changes to your code, you can restart all the processes managed by Procodile.
 
 ```
-procodile restart -r path/to/your/app
-# Restarting web.1 (PID: 87214)
-# Restarting worker.1 (PID: 87215)
-# Restarting cron.1 (PID: 87216)
+$ procodile restart
 ```
 
 Restarting processes is a tricky process and there are 4 different modes which you can choose for your processes which define exactly how Procodile will restart it.
@@ -114,19 +111,32 @@ Restarting processes is a tricky process and there are 4 different modes which y
 
 Procdile can tell you its current status by running the `status` command. This will show the status for all processes that are being supervised by Procodile.
 
+```
+$ procodile status
+```
+
 ![Screenshot](https://share.adam.ac/16/NJBJBczv.png)
 
 ### Reloading configuration
 
-If you make changes to your `Procfile` or `Procfile.options` files you can push these updates into the running supervisor using the `reload_config` command.
+If you make changes to your `Procfile` or `Procfile.options` files you can push these updates into the running supervisor using the `reload` command.
 
-* If you increase the quantity of a process, new processes will be started.
-* If you decrease the quantity of a process, processes will be stopped.
+* If you increase or decrease the quantity of processes required, they will be changed the next you start/restart a process or when you run `check_concurrency`.
 * If you change a command, the old command will continue to run until you next `restart`.
+* Changes to environment variables will apply next time a process is started.
+* Changes to the restart mode of a process will apply straight away so this will be used on the next restart.
 * Changes to `app_name`, `log_path` and `pid_root` will not be updated until the supervisor is restarted.
 
 ```
-procodile reload_config
+$ procodile reload
+```
+
+### Checking process concurrency
+
+Sometimes you need to change the quantity of processes that are running in situ. Running `check_concurrency` will compare the running process quantity with that in your configuration and start/stop processes so they match.
+
+```
+$ procodile check_concurrency
 ```
 
 ### Killing everything
@@ -134,16 +144,24 @@ procodile reload_config
 If you want everything to die forcefully. The `procodile kill` command will be your friend. This will look in your `pids` directory and send `KILL` signals to every process mentioned. This is why it's important that the directory is only used for Procodile managed processes. You shouldn't need to use this very often.
 
 ```
-procodile kill
-# Sent KILL to 19313 (cron.1)
-# Sent KILL to 19249 (supervisor)
-# Sent KILL to 19314 (web.1)
-# Sent KILL to 19312 (worker.1)
+$ procodile kill
 ```
 
 ## PID files
 
 The PIDs for each of the processes are stored in a `pids` dirctory also in the root of your application. It is important that this folder only contains PID files for processes managed by Procodile. Each process will have an environment variable of `PID_FILE` which contains the path to its own PID file. If you application respawns itself, you'll need to make sure you update this file to contain the new PID so that Procodile can continue to monitor the process.
+
+## Application Root Path
+
+In these examples, we've assumed that you're current within root directory of your application however you can use the `--root` (or `-r`) option to specify the root directory.
+
+```
+$ procodile start --root /opt/apps/banana-app
+```
+
+If you deploy your application into a release directory and then symlink into a `current` directory, you should always use this option otherwise Procodile will resolve the root into the specific release directory and restarts will always just restart the same directory that you were in when you started the first time.
+
+If you need to provide the application root directory to your processes, you can use the `APP_ROOT` environment variable which will pass through whatever you enter here.
 
 ## Futher configuration
 
@@ -175,9 +193,8 @@ processes:
 
 # You can add environment variables which should be provided to any spawned processes
 env:
-  SMTP_SERVER: smtp.myserver.com
-  SMTP_USERNAME: app-name
-  SMTP_PASSWORD: mysecurepassword
+  RAILS_ENV: production
+  SECRET_KEY_BASE: XXX
 ```
 
 It is recommended to create and commit a `Procfile.options` file for your application. If changes are needed (for example to increase or decrease a process quantity), a `Procfile.local` file can be added on a per-installation basis to change this.

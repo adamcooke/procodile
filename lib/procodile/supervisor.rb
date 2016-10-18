@@ -36,7 +36,7 @@ module Procodile
     end
 
     def start_processes(types = [])
-      @config.reload
+      reload_config
       Array.new.tap do |instances_started|
         @config.processes.each do |name, process|
           next if types && !types.include?(name.to_s) # Not a process we want
@@ -73,7 +73,7 @@ module Procodile
     end
 
     def restart(options = {})
-      @config.reload
+      reload_config
       Array.new.tap do |instances_restarted|
         if options[:processes].nil?
           Procodile.log nil, "system", "Restarting all #{@config.app_name} processes"
@@ -135,7 +135,24 @@ module Procodile
     def reload_config
       Procodile.log nil, "system", "Reloading configuration"
       @config.reload
-      check_instance_quantities
+    end
+
+    def check_concurrency(options = {})
+      Procodile.log nil, "system", "Checking process concurrency"
+      reload_config unless options[:reload] == false
+      result = check_instance_quantities
+      if result[:started].empty? && result[:stopped].empty?
+        Procodile.log nil, "system", "Process concurrency looks good"
+      else
+        unless result[:started].empty?
+          Procodile.log nil, "system", "Concurrency check started #{result[:started].map(&:description).join(', ')}"
+        end
+
+        unless result[:stopped].empty?
+          Procodile.log nil, "system", "Concurrency check stopped #{result[:stopped].map(&:description).join(', ')}"
+        end
+      end
+      result
     end
 
     def to_hash

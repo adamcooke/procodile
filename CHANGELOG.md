@@ -12,3 +12,5 @@
 * Moved capistrano recipes into their own repository/gem (`procodile-capistrano`).
 * Adds `APP_ROOT` environment variable that is provided to all spawned processes with the root of the application in.
 * Support for defining environment variables in the `Procfile.options` (or `Procfile.local`) files which will be provided to the processes.
+* `reload_config` renamed to `reload` and will no longer check concurrency of processes.
+* Added `check_concurrency` command to check the concurrency of the running processes compared to the configured options.
