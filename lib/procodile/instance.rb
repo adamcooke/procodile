@@ -24,6 +24,16 @@ module Procodile
     end
 
     #
+    # Return an array of environment variables that should be set
+    #
+    def environment_variables
+      {
+        'PID_FILE' => self.pid_file_path,
+        'APP_ROOT' => @process.config.root
+      }
+    end
+
+    #
     # Should this instance still be monitored by the supervisor?
     #
     def unmonitored?
@@ -86,7 +96,7 @@ module Procodile
         end
 
         Dir.chdir(@process.config.root)
-        @pid = ::Process.spawn({'PID_FILE' => pid_file_path}, @process.command, :out => log_destination, :err => log_destination, :pgroup => true)
+        @pid = ::Process.spawn(environment_variables, @process.command, :out => log_destination, :err => log_destination, :pgroup => true)
         Procodile.log(@process.log_color, description, "Started with PID #{@pid}")
         File.open(pid_file_path, 'w') { |f| f.write(@pid.to_s + "\n") }
         ::Process.detach(@pid)

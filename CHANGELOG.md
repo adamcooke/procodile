@@ -10,3 +10,4 @@
 * Adds `help` command which shows a list of all supported commands for procodile.
 * Show the current root directory in the status output.
 * Moved capistrano recipes into their own repository/gem (`procodile-capistrano`).
+* Adds `APP_ROOT` environment variable that is provided to all spawned processes with the root of the application in.
