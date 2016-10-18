@@ -8,3 +8,5 @@
 * Fixes issue where restarting a process would result in the logs disappearing when piped back.
 * Adds a `--json` option for the `status` command to return status information as a JSON hash.
 * Adds `help` command which shows a list of all supported commands for procodile.
+* Show the current root directory in the status output.
+* Moved capistrano recipes into their own repository/gem (`procodile-capistrano`).
