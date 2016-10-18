@@ -3,6 +3,10 @@
 ## v1.0.4
 
 * Sets the name of the procodile supervisor process to `[procodile] App Name (root)`
+* Removes `stop_supervisor` method. The supervisor can only be stopped by sending it a TERM signal manually or through `stop --stop-supervisor`
+* Changes to `start`. By default, this will now start the supervisor if it's not running and then any processes required. To just start the supervisor, you can use `start --no-processes` and to avoid the behaviour where the supervisor is started when it's not running you can pass `--no-supervisor`.
+* Running `start --foreground` will now fail if the start command is working with an already running supervisor.
+* Fixes potential issue where the output can hang waiting for data from a process.
 
 ## v1.0.3
 

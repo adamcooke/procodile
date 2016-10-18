@@ -20,8 +20,8 @@ module Procodile
       @signal_handler.register('HUP') { reload_config }
     end
 
-    def start(options = {})
-      Procodile.log nil, "system", "#{@config.app_name} supervisor started with PID #{::Process.pid}"
+    def start(&after_start)
+      Procodile.log nil, "system", "Procodile supervisor started with PID #{::Process.pid}"
       if @run_options[:brittle]
         Procodile.log nil, "system", "Running in brittle mode"
       end
@@ -29,13 +29,13 @@ module Procodile
         socket = ControlServer.new(self)
         socket.listen
       end
-      start_processes(options[:processes])
       watch_for_output
       @started_at = Time.now
+      after_start.call(self) if block_given?
       loop { supervise; sleep 3 }
     end
 
-    def start_processes(types = [])
+    def start_processes(types = nil)
       reload_config
       Array.new.tap do |instances_started|
         @config.processes.each do |name, process|
@@ -97,7 +97,7 @@ module Procodile
     end
 
     def stop_supervisor
-      Procodile.log nil, 'system', "Stopping #{@config.app_name} supervisor"
+      Procodile.log nil, 'system', "Stopping Procodile supervisor"
       FileUtils.rm_f(File.join(@config.pid_root, 'supervisor.pid'))
       ::Process.exit 0
     end

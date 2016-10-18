@@ -71,6 +71,14 @@ module Procodile
         cli.options[:processes] = processes
       end
 
+      opts.on("--no-supervisor", "Do not start a supervisor if its not running") do
+        cli.options[:start_supervisor] = false
+      end
+
+      opts.on("--no-processes", "Do not start any processes (only applicable when supervisor is stopped)") do
+        cli.options[:start_processes] = false
+      end
+
       opts.on("-f", "--foreground", "Run the supervisor in the foreground") do
         cli.options[:foreground] = true
       end
@@ -95,46 +103,40 @@ module Procodile
       end
     end
     command def start
-      if running?
+      if supervisor_running?
+        if @options[:foreground]
+          raise Error, "Cannot be started in the foreground because supervisor already running"
+        end
+
+        if @options[:brittle]
+          raise Error, "Cannot become brittle because supervisor is already running"
+        end
+
+        if @options[:stop_when_none]
+          raise Error, "Cannot stop supervisor when none running because supervisor is already running"
+        end
+
         instances = ControlClient.run(@config.sock_path, 'start_processes', :processes => process_names_from_cli_option)
         if instances.empty?
-          raise Error, "No processes were started. The type you entered might already be running or isn't defined."
+          puts "No processes to start."
         else
           instances.each do |instance|
-            puts "Started #{instance['description']} (PID: #{instance['pid']})"
+            puts "Started".color(32) + " #{instance['description']} (PID: #{instance['pid']})"
           end
-          return
         end
-      end
-
-      run_options = {}
-      run_options[:brittle] = @options[:brittle]
-      run_options[:stop_when_none] = @options[:stop_when_none]
-
-      processes = process_names_from_cli_option
-
-      if @options[:clean]
-        FileUtils.rm_f(File.join(@config.pid_root, '*.pid'))
-        FileUtils.rm_f(File.join(@config.pid_root, '*.sock'))
-        puts "Removed all old pid & sock files"
-      end
-
-      $0="[procodile] #{@config.app_name} (#{@config.root})"
-      if @options[:foreground]
-        File.open(pid_path, 'w') { |f| f.write(::Process.pid) }
-        Supervisor.new(@config, run_options).start(:processes => processes)
+        return
       else
-        FileUtils.rm_f(File.join(@config.pid_root, "*.pid"))
-        pid = fork do
-          STDOUT.reopen(@config.log_path, 'a')
-          STDOUT.sync = true
-          STDERR.reopen(@config.log_path, 'a')
-          STDERR.sync = true
-          Supervisor.new(@config, run_options).start(:processes => processes)
+        # The supervisor isn't actually running. We need to start it before processes can be
+        # begin being processed
+        if @options[:start_supervisor] == false
+          raise Error, "Supervisor is not running and cannot be started because --no-supervisor is set"
+        else
+          start_supervisor do |supervisor|
+            unless @options[:start_processes] == false
+              supervisor.start_processes(process_names_from_cli_option)
+            end
+          end
         end
-        ::Process.detach(pid)
-        File.open(pid_path, 'w') { |f| f.write(pid) }
-        puts "Started #{@config.app_name} supervisor with PID #{pid}"
       end
     end
 
@@ -153,18 +155,22 @@ module Procodile
       end
     end
     command def stop
-      if running?
+      if supervisor_running?
         options = {}
         instances = ControlClient.run(@config.sock_path, 'stop', :processes => process_names_from_cli_option, :stop_supervisor => @options[:stop_supervisor])
         if instances.empty?
-          puts "There are no processes to stop."
+          puts "No processes were stopped."
         else
           instances.each do |instance|
-            puts "Stopping #{instance['description']} (PID: #{instance['pid']})"
+            puts "Stopped".color(31) + " #{instance['description']} (PID: #{instance['pid']})"
           end
         end
+
+        if @options[:stop_supervisor]
+          puts "Supervisor will be stopped when processes are stopped."
+        end
       else
-        raise Error, "#{@config.app_name} supervisor isn't running"
+        raise Error, "Procodile supervisor isn't running"
       end
     end
 
@@ -179,32 +185,18 @@ module Procodile
       end
     end
     command def restart
-      if running?
+      if supervisor_running?
         options = {}
         instances = ControlClient.run(@config.sock_path, 'restart', :processes => process_names_from_cli_option)
         if instances.empty?
           puts "There are no processes to restart."
         else
           instances.each do |instance|
-            puts "Restarting #{instance['description']} (PID: #{instance['pid']})"
+            puts "Restarted".color(35) + " #{instance['description']} (PID: #{instance['pid']})"
           end
         end
       else
-        raise Error, "#{@config.app_name} supervisor isn't running"
-      end
-    end
-
-    #
-    # Stop Supervisor
-    #
-
-    desc "Stop the supervisor without stopping processes"
-    command def stop_supervisor
-      if running?
-        ::Process.kill('TERM', current_pid)
-        puts "Supervisor will be stopped in a moment."
-      else
-        raise Error, "#{@config.app_name} supervisor isn't running"
+        raise Error, "Procodile supervisor isn't running"
       end
     end
 
@@ -214,11 +206,11 @@ module Procodile
 
     desc "Reload Procodile configuration"
     command def reload
-      if running?
+      if supervisor_running?
         ControlClient.run(@config.sock_path, 'reload_config')
-        puts "Reloaded config for #{@config.app_name}"
+        puts "Reloaded Procodile config"
       else
-        raise Error, "#{@config.app_name} supervisor isn't running"
+        raise Error, "Procodile supervisor isn't running"
       end
     end
 
@@ -233,21 +225,21 @@ module Procodile
       end
     end
     command def check_concurrency
-      if running?
+      if supervisor_running?
         reply = ControlClient.run(@config.sock_path, 'check_concurrency', :reload => @options[:reload])
         if reply['started'].empty? && reply['stopped'].empty?
-          puts "Everything looks good!"
+          puts "Processes are running as configured"
         else
           reply['started'].each do |instance|
-            puts "Started #{instance['description']}".color(32)
+            puts "Started".color(32) + " #{instance['description']} (PID: #{instance['pid']})"
           end
 
           reply['stopped'].each do |instance|
-            puts "Stopped #{instance['description']}".color(31)
+            puts "Stopped".color(31) + " #{instance['description']} (PID: #{instance['pid']})"
           end
         end
       else
-        raise Error, "#{@config.app_name} supervisor isn't running"
+        raise Error, "Procodile supervisor isn't running"
       end
     end
 
@@ -262,7 +254,7 @@ module Procodile
       end
     end
     command def status
-      if running?
+      if supervisor_running?
         status = ControlClient.run(@config.sock_path, 'status')
         if @options[:json]
           puts status.to_json
@@ -271,7 +263,7 @@ module Procodile
           StatusCLIOutput.new(status).print_all
         end
       else
-        puts "#{@config.app_name} supervisor not running"
+        raise Error, "Procodile supervisor isn't running"
       end
     end
 
@@ -295,18 +287,7 @@ module Procodile
 
     private
 
-    def send_to_socket(command, options = {})
-
-      socket = UNIXSocket.new(@config.sock_path)
-      # Get the connection confirmation
-      connection = socket.gets
-      return false unless connection == 'READY'
-      # Send a command.
-    ensure
-      socket.close rescue nil
-    end
-
-    def running?
+    def supervisor_running?
       if pid = current_pid
         ::Process.getpgid(pid) ? true : false
       else
@@ -344,6 +325,38 @@ module Procodile
         processes
       else
         nil
+      end
+    end
+
+    def start_supervisor(&after_start)
+      run_options = {}
+      run_options[:brittle] = @options[:brittle]
+      run_options[:stop_when_none] = @options[:stop_when_none]
+
+      processes = process_names_from_cli_option
+
+      if @options[:clean]
+        FileUtils.rm_f(File.join(@config.pid_root, '*.pid'))
+        FileUtils.rm_f(File.join(@config.pid_root, '*.sock'))
+        puts "Removed all old pid & sock files"
+      end
+
+      $0="[procodile] #{@config.app_name} (#{@config.root})"
+      if @options[:foreground]
+        File.open(pid_path, 'w') { |f| f.write(::Process.pid) }
+        Supervisor.new(@config, run_options).start(&after_start)
+      else
+        FileUtils.rm_f(File.join(@config.pid_root, "*.pid"))
+        pid = fork do
+          STDOUT.reopen(@config.log_path, 'a')
+          STDOUT.sync = true
+          STDERR.reopen(@config.log_path, 'a')
+          STDERR.sync = true
+          Supervisor.new(@config, run_options).start(&after_start)
+        end
+        ::Process.detach(pid)
+        File.open(pid_path, 'w') { |f| f.write(pid) }
+        puts "Started Procodile supervisor with PID #{pid}"
       end
     end
 
