@@ -1,10 +1,17 @@
 #!/usr/bin/env ruby
+$:.unshift(File.expand_path('../../lib', __FILE__))
+
 require 'optparse'
 require 'fileutils'
-$:.unshift(File.expand_path('../../lib', __FILE__))
 require 'procodile'
+require 'procodile/error'
+require 'procodile/config'
+require 'procodile/cli'
+
+Thread.abort_on_exception = true
 
 command = ARGV[0] || 'help'
+cli = Procodile::CLI.new
 
 options = {}
 begin
@@ -13,48 +20,8 @@ begin
     opts.on("-r", "--root PATH", "The path to the root of your application") do |root|
       options[:root] = root
     end
-
-    if ['start', 'stop', 'restart'].include?(command)
-      opts.on("-p", "--processes a,b,c", "Only #{command} the listed processes or process types") do |processes|
-        options[:processes] = processes
-      end
-    end
-
-    if command == 'start'
-      opts.on("-f", "--foreground", "Run the supervisor in the foreground") do
-        options[:foreground] = true
-      end
-
-      opts.on("--clean", "Remove all previous pid and sock files before starting") do
-        options[:clean] = true
-      end
-
-      opts.on("-b", "--brittle", "Kill everything when one process exits") do
-        options[:brittle] = true
-      end
-
-      opts.on("--stop-when-none", "Stop the supervisor when all processes are stopped") do
-        options[:stop_when_none] = true
-      end
-
-      opts.on("-d", "--dev", "Run in development mode") do
-        options[:development] = true
-        options[:brittle] = true
-        options[:foreground] = true
-        options[:stop_when_none] = true
-      end
-    end
-
-    if command == 'stop'
-      opts.on("-s", "--stop-supervisor", "Stop the ") do
-        options[:stop_supervisor] = true
-      end
-    end
-
-    if command == 'status'
-      opts.on("--json", "Return the status as a JSON hash") do
-        options[:json] = true
-      end
+    if cli.class.commands[command.to_sym] && option_block = cli.class.commands[command.to_sym][:options]
+      option_block.call(opts, cli)
     end
   end.parse!
 rescue OptionParser::InvalidOption => e
@@ -62,18 +29,10 @@ rescue OptionParser::InvalidOption => e
   exit 1
 end
 
-require 'procodile/error'
-require 'procodile/config'
-require 'procodile/cli'
-
-Thread.abort_on_exception = true
 begin
   if command != 'help'
-    config = Procodile::Config.new(options[:root] ? File.expand_path(options[:root]) : FileUtils.pwd)
-  else
-    config = nil
+    cli.config = Procodile::Config.new(options[:root] ? File.expand_path(options[:root]) : FileUtils.pwd)
   end
-  cli = Procodile::CLI.new(config, options)
   cli.run(command)
 rescue Procodile::Error => e
   $stderr.puts "Error: #{e.message}".color(31)

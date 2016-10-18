@@ -15,14 +15,21 @@ module Procodile
       @description = description
     end
 
-    def self.command(name)
-      commands[name] = {:name => name, :description => @description}
-      @description = nil
+    def self.options(&block)
+      @options = block
     end
 
-    def initialize(config, cli_options = {})
-      @config = config
-      @cli_options = cli_options
+    def self.command(name)
+      commands[name] = {:name => name, :description => @description, :options => @options}
+      @description = nil
+      @options = nil
+    end
+
+    attr_accessor :options
+    attr_accessor :config
+
+    def initialize
+      @options = {}
     end
 
     def run(command)
@@ -32,6 +39,10 @@ module Procodile
         raise Error, "Invalid command '#{command}'"
       end
     end
+
+    #
+    # Help
+    #
 
     desc "Shows this help output"
     command def help
@@ -49,7 +60,39 @@ module Procodile
       puts "For example 'procodile start --help'."
     end
 
+    #
+    # Start
+    #
+
     desc "Starts processes and/or the supervisor"
+    options do |opts, cli|
+      opts.on("-p", "--processes a,b,c", "Only start the listed processes or process types") do |processes|
+        cli.options[:processes] = processes
+      end
+
+      opts.on("-f", "--foreground", "Run the supervisor in the foreground") do
+        cli.options[:foreground] = true
+      end
+
+      opts.on("--clean", "Remove all previous pid and sock files before starting") do
+        cli.options[:clean] = true
+      end
+
+      opts.on("-b", "--brittle", "Kill everything when one process exits") do
+        cli.options[:brittle] = true
+      end
+
+      opts.on("--stop-when-none", "Stop the supervisor when all processes are stopped") do
+        cli.options[:stop_when_none] = true
+      end
+
+      opts.on("-d", "--dev", "Run in development mode") do
+        cli.options[:development] = true
+        cli.options[:brittle] = true
+        cli.options[:foreground] = true
+        cli.options[:stop_when_none] = true
+      end
+    end
     command def start
       if running?
         instances = ControlClient.run(@config.sock_path, 'start_processes', :processes => process_names_from_cli_option)
@@ -64,18 +107,18 @@ module Procodile
       end
 
       run_options = {}
-      run_options[:brittle] = @cli_options[:brittle]
-      run_options[:stop_when_none] = @cli_options[:stop_when_none]
+      run_options[:brittle] = @options[:brittle]
+      run_options[:stop_when_none] = @options[:stop_when_none]
 
       processes = process_names_from_cli_option
 
-      if @cli_options[:clean]
+      if @options[:clean]
         FileUtils.rm_f(File.join(@config.pid_root, '*.pid'))
         FileUtils.rm_f(File.join(@config.pid_root, '*.sock'))
         puts "Removed all old pid & sock files"
       end
 
-      if @cli_options[:foreground]
+      if @options[:foreground]
         File.open(pid_path, 'w') { |f| f.write(::Process.pid) }
         Supervisor.new(@config, run_options).start(:processes => processes)
       else
@@ -93,11 +136,24 @@ module Procodile
       end
     end
 
+    #
+    # Stop
+    #
+
     desc "Stops processes and/or the supervisor"
+    options do |opts, cli|
+      opts.on("-p", "--processes a,b,c", "Only stop the listed processes or process types") do |processes|
+        cli.options[:processes] = processes
+      end
+
+      opts.on("-s", "--stop-supervisor", "Stop the ") do
+        cli.options[:stop_supervisor] = true
+      end
+    end
     command def stop
       if running?
         options = {}
-        instances = ControlClient.run(@config.sock_path, 'stop', :processes => process_names_from_cli_option, :stop_supervisor => @cli_options[:stop_supervisor])
+        instances = ControlClient.run(@config.sock_path, 'stop', :processes => process_names_from_cli_option, :stop_supervisor => @options[:stop_supervisor])
         if instances.empty?
           puts "There are no processes to stop."
         else
@@ -110,7 +166,16 @@ module Procodile
       end
     end
 
+    #
+    # Restart
+    #
+
     desc "Restart processes"
+    options do |opts, cli|
+      opts.on("-p", "--processes a,b,c", "Only restart the listed processes or process types") do |processes|
+        cli.options[:processes] = processes
+      end
+    end
     command def restart
       if running?
         options = {}
@@ -127,6 +192,10 @@ module Procodile
       end
     end
 
+    #
+    # Stop Supervisor
+    #
+
     desc "Stop the supervisor without stopping processes"
     command def stop_supervisor
       if running?
@@ -136,6 +205,10 @@ module Procodile
         raise Error, "#{@config.app_name} supervisor isn't running"
       end
     end
+
+    #
+    # Reload Config
+    #
 
     desc "Reload Procodile configuration"
     command def reload_config
@@ -147,11 +220,20 @@ module Procodile
       end
     end
 
+    #
+    # Status
+    #
+
     desc "Show the current status of processes"
+    options do |opts, cli|
+      opts.on("--json", "Return the status as a JSON hash") do
+        cli.options[:json] = true
+      end
+    end
     command def status
       if running?
         stats = ControlClient.run(@config.sock_path, 'status')
-        if @cli_options[:json]
+        if @options[:json]
           puts stats.to_json
         else
           puts "|| supervisor pid #{stats['supervisor']['pid']}"
@@ -192,6 +274,10 @@ module Procodile
         puts "#{@config.app_name} supervisor not running"
       end
     end
+
+    #
+    # Kill
+    #
 
     desc "Forcefully kill all known processes"
     command def kill
@@ -244,8 +330,8 @@ module Procodile
     end
 
     def process_names_from_cli_option
-      if @cli_options[:processes]
-        processes = @cli_options[:processes].split(',')
+      if @options[:processes]
+        processes = @options[:processes].split(',')
         if processes.empty?
           raise Error, "No process names provided"
         end
