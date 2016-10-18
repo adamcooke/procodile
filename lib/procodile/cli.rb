@@ -1,4 +1,5 @@
 require 'fileutils'
+require 'procodile/version'
 require 'procodile/error'
 require 'procodile/supervisor'
 require 'procodile/signal_handler'
@@ -46,7 +47,7 @@ module Procodile
 
     desc "Shows this help output"
     command def help
-      puts "\e[45;37mWelcome to Procodile\e[0m"
+      puts "\e[45;37mWelcome to Procodile v#{Procodile::VERSION}\e[0m"
       puts "For documentation see https://adam.ac/procodile."
       puts
 
