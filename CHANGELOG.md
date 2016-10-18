@@ -1,5 +1,9 @@
 # Changelog
 
+## v1.0.4
+
+* Sets the name of the procodile supervisor process to `[procodile] App Name (root)`
+
 ## v1.0.3
 
 * The status output will show the times that the supervisor and all processes were last started.

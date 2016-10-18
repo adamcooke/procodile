@@ -119,6 +119,7 @@ module Procodile
         puts "Removed all old pid & sock files"
       end
 
+      $0="[procodile] #{@config.app_name} (#{@config.root})"
       if @options[:foreground]
         File.open(pid_path, 'w') { |f| f.write(::Process.pid) }
         Supervisor.new(@config, run_options).start(:processes => processes)
