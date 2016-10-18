@@ -35,7 +35,8 @@ module Procodile
       loop { supervise; sleep 3 }
     end
 
-    def start_processes(types = nil)
+    def start_processes(types = nil, options = {})
+      @last_tag = options[:tag]
       reload_config
       Array.new.tap do |instances_started|
         @config.processes.each do |name, process|
@@ -73,6 +74,7 @@ module Procodile
     end
 
     def restart(options = {})
+      @last_tag = options[:tag]
       reload_config
       Array.new.tap do |instances_restarted|
         if options[:processes].nil?
@@ -242,10 +244,11 @@ module Procodile
       end
     end
 
-    def start_instance(instance)
+    def start_instance(instance, options = {})
       if @run_options[:brittle]
         instance.respawnable = false
       end
+      instance.tag = @last_tag
       instance.start { |_, io| add_reader(instance, io) }
       @processes[instance.process] ||= []
       @processes[instance.process] << instance

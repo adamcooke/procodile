@@ -25,7 +25,7 @@ module Procodile
     end
 
     def start_processes(options)
-      instances = @supervisor.start_processes(options['processes'])
+      instances = @supervisor.start_processes(options['processes'], :tag => options['tag'])
       "200 " + instances.map(&:to_hash).to_json
     end
 
@@ -35,7 +35,7 @@ module Procodile
     end
 
     def restart(options)
-      instances = @supervisor.restart(:processes => options['processes'])
+      instances = @supervisor.restart(:processes => options['processes'], :tag => options['tag'])
       "200 " + instances.map { |a| a.map { |i| i ? i.to_hash : nil } }.to_json
     end
 

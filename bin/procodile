@@ -26,7 +26,7 @@ begin
       option_block.call(opts, cli)
     end
   end.parse!
-rescue OptionParser::InvalidOption => e
+rescue OptionParser::InvalidOption, OptionParser::MissingArgument => e
   $stderr.puts "Error: #{e.message}".color(31)
   exit 1
 end

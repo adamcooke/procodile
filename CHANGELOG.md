@@ -2,6 +2,7 @@
 
 ## v1.0.4
 
+* Add process tagging so instances can be tagged with a version (or whatever)
 * Process IDs will now increase upto a maximum of 10000 at which point they will circle back to 1 whenever processes are restarted (except when using usr1 or usr2 restart modes). This allows old disgarded processes to remain monitored until they are finally fully dead.
 * Sets the name of the procodile supervisor process to `[procodile] App Name (root)`
 * Removes `stop_supervisor` method. The supervisor can only be stopped by sending it a TERM signal manually or through `stop --stop-supervisor`

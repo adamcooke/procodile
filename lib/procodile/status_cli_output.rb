@@ -51,6 +51,7 @@ module Procodile
             print "   " + formatted_timestamp(instance['started_at']).ljust(10, ' ')
             print "   pid: " + instance['pid'].to_s.ljust(7, ' ')
             print "   respawns: " + instance['respawns'].to_s.ljust(7, ' ')
+            print "   tag: " + instance['tag'].to_s
             puts
           end
         end

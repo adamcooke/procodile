@@ -71,6 +71,10 @@ module Procodile
         cli.options[:processes] = processes
       end
 
+      opts.on("-t", "--tag TAGNAME", "Tag all started processes with the given tag") do |tag|
+        cli.options[:tag] = tag
+      end
+
       opts.on("--no-supervisor", "Do not start a supervisor if its not running") do
         cli.options[:start_supervisor] = false
       end
@@ -116,7 +120,7 @@ module Procodile
           raise Error, "Cannot stop supervisor when none running because supervisor is already running"
         end
 
-        instances = ControlClient.run(@config.sock_path, 'start_processes', :processes => process_names_from_cli_option)
+        instances = ControlClient.run(@config.sock_path, 'start_processes', :processes => process_names_from_cli_option, :tag => @options[:tag])
         if instances.empty?
           puts "No processes to start."
         else
@@ -133,7 +137,7 @@ module Procodile
         else
           start_supervisor do |supervisor|
             unless @options[:start_processes] == false
-              supervisor.start_processes(process_names_from_cli_option)
+              supervisor.start_processes(process_names_from_cli_option, :tag => @options[:tag])
             end
           end
         end
@@ -183,11 +187,14 @@ module Procodile
       opts.on("-p", "--processes a,b,c", "Only restart the listed processes or process types") do |processes|
         cli.options[:processes] = processes
       end
+
+      opts.on("-t", "--tag TAGNAME", "Tag all started processes with the given tag") do |tag|
+        cli.options[:tag] = tag
+      end
     end
     command def restart
       if supervisor_running?
-        options = {}
-        instances = ControlClient.run(@config.sock_path, 'restart', :processes => process_names_from_cli_option)
+        instances = ControlClient.run(@config.sock_path, 'restart', :processes => process_names_from_cli_option, :tag => @options[:tag])
         if instances.empty?
           puts "There are no processes to restart."
         else

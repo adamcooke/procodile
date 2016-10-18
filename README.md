@@ -62,6 +62,7 @@ Once everything is running, you can press CTRL+C which will terminate all the pr
 #### Additional options for start
 
 * `-p` or `--processes` - by default all process types will be started, if you'd prefer to only start  certain processes you can pass a list here. For example `web,worker,cron`.
+* `-t` or `--tag` - the tag to assign to any new processes started by this action
 * `-f` or `--foreground` - this will keep the Procodile application in the foreground rather than running it in the background. If you CTRL+C while running in the foreground, all processes will be stopped.
 * `--clean` - this will remove the contents of your `pids` directory before starting. This avoids the supervisor picking up any old processes and managing them when it shouldn't.
 * `-b` or `--brittle` - when enabled, if a single process dies, rather than respawning, all processes will be stopped and the supervisor shutdown.
@@ -106,6 +107,7 @@ Restarting processes is a tricky process and there are 4 different modes which y
 #### Additional options for restart
 
 * `-p` or `--processes` - by default all process types will be restarted, if you'd prefer to only restart certain processes you can pass a list here. You can restart individual types or instances. For example `web.2,worker` to restart the web.2 process and all worker processes.
+* `-t` or `--tag` - the tag to assign to any new processes started by this action
 
 ### Getting the status
 

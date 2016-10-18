@@ -7,6 +7,7 @@ module Procodile
     attr_reader :id
     attr_accessor :process
     attr_accessor :respawnable
+    attr_accessor :tag
 
     def initialize(process, id)
       @process = process
@@ -310,7 +311,8 @@ module Procodile
         :respawns => self.respawns,
         :status => self.status,
         :running => self.running?,
-        :started_at => @started_at ? @started_at.to_i : nil
+        :started_at => @started_at ? @started_at.to_i : nil,
+        :tag => self.tag
       }
     end
 
