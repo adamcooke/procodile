@@ -74,6 +74,14 @@ module Procodile
       (process_options[name] || {}).merge(local_process_options[name] || {})
     end
 
+    def environment_variables
+      (options['env'] || {}).merge(local_options['env'] || {})
+    end
+
+    def local_environment_variables
+      @local_environment_variables ||= local_options['env'] || {}
+    end
+
     def pid_root
       @pid_root ||= File.expand_path(local_options['pid_root'] || options['pid_root'] || 'pids', @root)
     end

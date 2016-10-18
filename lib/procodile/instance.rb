@@ -27,10 +27,10 @@ module Procodile
     # Return an array of environment variables that should be set
     #
     def environment_variables
-      {
+      @process.config.environment_variables.merge({
         'PID_FILE' => self.pid_file_path,
         'APP_ROOT' => @process.config.root
-      }
+      })
     end
 
     #
