@@ -167,7 +167,7 @@ If you need to provide the application root directory to your processes, you can
 
 Now... until this point you were just using the defaults for everything. If you want to add some fine tuning to how Procodile treats your application, you can create `Procfile.options` file in the root of your application. The example belows shows a full example of all the options available. You can skip any of these as appropriate:
 
-```
+```yaml
 # The name of the application as shown on the console (default is 'Procodile')
 app_name: Llama Kit
 # The directory that all PIDs will be stored in (default is 'pids')
