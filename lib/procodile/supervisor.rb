@@ -6,6 +6,7 @@ module Procodile
     attr_reader :config
     attr_reader :processes
     attr_reader :started_at
+    attr_reader :tag
 
     def initialize(config, run_options = {})
       @config = config
@@ -20,15 +21,16 @@ module Procodile
       @signal_handler.register('HUP') { reload_config }
     end
 
+    def allow_respawning?
+      @run_options[:respawn] != false
+    end
+
     def start(&after_start)
       Procodile.log nil, "system", "Procodile supervisor started with PID #{::Process.pid}"
-      if @run_options[:brittle]
-        Procodile.log nil, "system", "Running in brittle mode"
+      if @run_options[:respawn] == false
+        Procodile.log nil, "system", "Automatic respawning is disabled"
       end
-      Thread.new do
-        socket = ControlServer.new(self)
-        socket.listen
-      end
+      ControlServer.start(self)
       watch_for_output
       @started_at = Time.now
       after_start.call(self) if block_given?
@@ -36,13 +38,13 @@ module Procodile
     end
 
     def start_processes(types = nil, options = {})
-      @last_tag = options[:tag]
+      @tag = options[:tag]
       reload_config
       Array.new.tap do |instances_started|
         @config.processes.each do |name, process|
           next if types && !types.include?(name.to_s)                   # Not a process we want
           next if @processes[process] && !@processes[process].empty?    # Process type already running
-          instances = start_instances(process.generate_instances)
+          instances = process.generate_instances(self).each(&:start)
           instances_started.push(*instances)
         end
       end
@@ -52,7 +54,7 @@ module Procodile
       if options[:stop_supervisor]
         @run_options[:stop_when_none] = true
       end
-
+      reload_config
       Array.new.tap do |instances_stopped|
         if options[:processes].nil?
           Procodile.log nil, "system", "Stopping all #{@config.app_name} processes"
@@ -74,7 +76,7 @@ module Procodile
     end
 
     def restart(options = {})
-      @last_tag = options[:tag]
+      @tag = options[:tag]
       reload_config
       Array.new.tap do |instances_restarted|
         if options[:processes].nil?
@@ -90,7 +92,7 @@ module Procodile
 
         instances.each do |instance|
           next if instance.stopping?
-          new_instance = instance.restart { |instance| start_instance(instance) }
+          new_instance = instance.restart
           instances_restarted << [instance, new_instance]
         end
 
@@ -106,11 +108,7 @@ module Procodile
     end
 
     def supervise
-      # Tidy up any instances that we no longer wish to be managed. They will
-      # be removed from the list.
-      remove_unmonitored_instances
-
-      # Remove processes that have been stopped
+      # Tell instances that have been stopped that they have been stopped
       remove_stopped_instances
 
       # Remove removed processes
@@ -119,13 +117,7 @@ module Procodile
       # Check all instances that we manage and let them do their things.
       @processes.each do |_, instances|
         instances.each do |instance|
-          instance.check(:on_start => proc { |_, io| add_reader(instance, io) })
-          if instance.unmonitored?
-            if @run_options[:brittle]
-              Procodile.log nil, "system", "Stopping everything because a process has died in brittle mode."
-              return stop
-            end
-          end
+          instance.check
         end
       end
 
@@ -168,13 +160,25 @@ module Procodile
       }
     end
 
-    private
-
     def add_reader(instance, io)
-      return unless io
       @readers[io] = instance
       @signal_handler.notice
     end
+
+    def add_instance(instance, io = nil)
+      add_reader(instance, io) if io
+      @processes[instance.process] ||= []
+      @processes[instance.process] << instance
+    end
+
+    def remove_instance(instance)
+      if @processes[instance.process]
+        @processes[instance.process].delete(instance)
+        @readers.delete(instance)
+      end
+    end
+
+    private
 
     def watch_for_output
       Thread.new do
@@ -230,7 +234,7 @@ module Procodile
             if active_instances.size < process.quantity
               quantity_needed = process.quantity - active_instances.size
               Procodile.log nil, "system", "Starting #{quantity_needed} more #{process.name} process(es)"
-              status[:started] = start_instances(process.generate_instances(quantity_needed))
+              status[:started] = process.generate_instances(self, quantity_needed).each(&:start)
             end
           end
 
@@ -238,32 +242,10 @@ module Procodile
       end
     end
 
-    def start_instances(instances)
-      instances.each do |instance|
-        start_instance(instance)
-      end
-    end
-
-    def start_instance(instance, options = {})
-      if @run_options[:brittle]
-        instance.respawnable = false
-      end
-      instance.tag = @last_tag
-      instance.start { |_, io| add_reader(instance, io) }
-      @processes[instance.process] ||= []
-      @processes[instance.process] << instance
-    end
-
-    def remove_unmonitored_instances
-      @processes.each do |_, instances|
-        instances.reject!(&:unmonitored?)
-      end
-    end
-
     def remove_stopped_instances
       @processes.each do |_, instances|
         instances.reject! do |instance|
-          if !instance.running? && instance.stopping?
+          if instance.stopping? && !instance.running?
             instance.on_stop
             true
           else

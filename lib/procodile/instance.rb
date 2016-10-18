@@ -6,14 +6,13 @@ module Procodile
     attr_accessor :pid
     attr_reader :id
     attr_accessor :process
-    attr_accessor :respawnable
-    attr_accessor :tag
+    attr_reader :tag
 
-    def initialize(process, id)
+    def initialize(supervisor, process, id)
+      @supervisor = supervisor
       @process = process
       @id = id
       @respawns = 0
-      @respawnable = true
       @started_at = nil
     end
 
@@ -34,6 +33,8 @@ module Procodile
         'Stopping'
       elsif running?
         'Running'
+      elsif failed?
+        'Failed'
       else
         'Unknown'
       end
@@ -47,13 +48,6 @@ module Procodile
         'PID_FILE' => self.pid_file_path,
         'APP_ROOT' => @process.config.root
       })
-    end
-
-    #
-    # Should this instance still be monitored by the supervisor?
-    #
-    def unmonitored?
-      @monitored == false
     end
 
     #
@@ -91,7 +85,7 @@ module Procodile
     #
     # Start a new instance of this process
     #
-    def start(options = {}, &block)
+    def start
       if stopping?
         Procodile.log(@process.log_color, description, "Process is stopped/stopping therefore cannot be started again.")
         return false
@@ -99,32 +93,25 @@ module Procodile
 
       update_pid
       if running?
-        # If the PID in the file is already running, we should just just continue
-        # to monitor this process rather than spawning a new one.
         Procodile.log(@process.log_color, description, "Already running with PID #{@pid}")
         nil
       else
         if self.process.log_path
           log_destination = File.open(self.process.log_path, 'a')
-          return_value = nil
+          io = nil
         else
           reader, writer = IO.pipe
           log_destination = writer
-          return_value = reader
+          io = reader
         end
-
+        @tag = @supervisor.tag.dup if @supervisor.tag
         Dir.chdir(@process.config.root)
         @pid = ::Process.spawn(environment_variables, @process.command, :out => log_destination, :err => log_destination, :pgroup => true)
-        Procodile.log(@process.log_color, description, "Started with PID #{@pid}")
         File.open(pid_file_path, 'w') { |f| f.write(@pid.to_s + "\n") }
+        @supervisor.add_instance(self, io)
         ::Process.detach(@pid)
+        Procodile.log(@process.log_color, description, "Started with PID #{@pid}" + (@tag ? " (tagged with #{@tag})" : ''))
         @started_at = Time.now
-
-        if block_given?
-          block.call(self, return_value)
-        end
-
-        return_value
       end
     end
 
@@ -140,6 +127,13 @@ module Procodile
     #
     def stopped?
       @stopped || false
+    end
+
+    #
+    # Has this failed?
+    #
+    def failed?
+      @failed ? true : false
     end
 
     #
@@ -165,7 +159,6 @@ module Procodile
       @started_at = nil
       @stopped = true
       tidy
-      unmonitor
     end
 
     #
@@ -179,7 +172,7 @@ module Procodile
     #
     # Retarts the process using the appropriate method from the process configuraiton
     #
-    def restart(&block)
+    def restart
       Procodile.log(@process.log_color, description, "Restarting using #{@process.restart_mode} mode")
       update_pid
       case @process.restart_mode
@@ -190,26 +183,20 @@ module Procodile
         else
           Procodile.log(@process.log_color, description, "Process not running already. Starting it.")
           on_stop
-          block.call(@process.create_instance)
+          @process.create_instance(@supervisor).start
         end
         nil
       when 'start-term'
-        # Create a new instance and start it
-        new_instance = @process.create_instance
-        block.call(new_instance)
-        # Send a term to the old one
+        new_instance = @process.create_instance(@supervisor)
+        new_instance.start
         stop
-        # Return the instance
         new_instance
       when 'term-start'
-        # Stop our process
         stop
-        new_instance = @process.create_instance
+        new_instance = @process.create_instance(@supervisor)
         Thread.new do
-          # Wait for this process to stop
           sleep 0.5 while running?
-          # When it's no running, create the new one
-          block.call(new_instance)
+          new_instance.start
         end
         new_instance
       end
@@ -234,8 +221,7 @@ module Procodile
     # Check the status of this process and handle as appropriate.
     #
     def check(options = {})
-      # Don't do any checking if we're in the midst of a restart
-      return if unmonitored?
+      return if failed?
 
       if self.running?
         # Everything is OK. The process is running.
@@ -245,30 +231,23 @@ module Procodile
         # the file in case the process has changed itself.
         return check if update_pid
 
-        if @respawnable
+        if @supervisor.allow_respawning?
           if can_respawn?
             Procodile.log(@process.log_color, description, "Process has stopped. Respawning...")
-            options[:on_start] ? start(&options[:on_start]) : start
+            start
             add_respawn
           elsif respawns >= @process.max_respawns
             Procodile.log(@process.log_color, description, "\e[41;37mWarning:\e[0m\e[31m this process has been respawned #{respawns} times and keeps dying.\e[0m")
             Procodile.log(@process.log_color, description, "It will not be respawned automatically any longer and will no longer be managed.".color(31))
+            @failed = Time.now
             tidy
-            unmonitor
           end
         else
           Procodile.log(@process.log_color, description, "Process has stopped. Respawning not available.")
+          @failed = Time.now
           tidy
-          unmonitor
         end
       end
-    end
-
-    #
-    # Mark this process as dead and tidy up after it
-    #
-    def unmonitor
-      @monitored = false
     end
 
     #

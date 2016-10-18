@@ -82,15 +82,15 @@ module Procodile
     #
     # Generate an array of new instances for this process (based on its quantity)
     #
-    def generate_instances(quantity = self.quantity)
-      quantity.times.map { |i| create_instance }
+    def generate_instances(supervisor, quantity = self.quantity)
+      quantity.times.map { |i| create_instance(supervisor) }
     end
 
     #
     # Create a new instance
     #
-    def create_instance
-      Instance.new(self, get_instance_id)
+    def create_instance(supervisor)
+      Instance.new(supervisor, self, get_instance_id)
     end
 
     #

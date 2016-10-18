@@ -4,6 +4,13 @@ require 'procodile/control_session'
 module Procodile
   class ControlServer
 
+    def self.start(supervisor)
+      Thread.new do
+        socket = ControlServer.new(supervisor)
+        socket.listen
+      end
+    end
+
     def initialize(supervisor)
       @supervisor = supervisor
     end

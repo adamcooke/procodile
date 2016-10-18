@@ -91,8 +91,8 @@ module Procodile
         cli.options[:clean] = true
       end
 
-      opts.on("-b", "--brittle", "Kill everything when one process exits") do
-        cli.options[:brittle] = true
+      opts.on("--no-respawn", "Disable respawning for all processes") do
+        cli.options[:respawn] = false
       end
 
       opts.on("--stop-when-none", "Stop the supervisor when all processes are stopped") do
@@ -101,7 +101,7 @@ module Procodile
 
       opts.on("-d", "--dev", "Run in development mode") do
         cli.options[:development] = true
-        cli.options[:brittle] = true
+        cli.options[:respawn] = false
         cli.options[:foreground] = true
         cli.options[:stop_when_none] = true
       end
@@ -112,8 +112,8 @@ module Procodile
           raise Error, "Cannot be started in the foreground because supervisor already running"
         end
 
-        if @options[:brittle]
-          raise Error, "Cannot become brittle because supervisor is already running"
+        if @options.has_key?(:respawn)
+          raise Error, "Cannot disable respawning because supervisor is already running"
         end
 
         if @options[:stop_when_none]
@@ -344,7 +344,7 @@ module Procodile
 
     def start_supervisor(&after_start)
       run_options = {}
-      run_options[:brittle] = @options[:brittle]
+      run_options[:respawn] = @options[:respawn]
       run_options[:stop_when_none] = @options[:stop_when_none]
 
       processes = process_names_from_cli_option

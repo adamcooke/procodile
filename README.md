@@ -65,7 +65,7 @@ Once everything is running, you can press CTRL+C which will terminate all the pr
 * `-t` or `--tag` - the tag to assign to any new processes started by this action
 * `-f` or `--foreground` - this will keep the Procodile application in the foreground rather than running it in the background. If you CTRL+C while running in the foreground, all processes will be stopped.
 * `--clean` - this will remove the contents of your `pids` directory before starting. This avoids the supervisor picking up any old processes and managing them when it shouldn't.
-* `-b` or `--brittle` - when enabled, if a single process dies, rather than respawning, all processes will be stopped and the supervisor shutdown.
+* `--no-respawn` - this will disable all respawning of processes managed by Procodile. If a process stops working, it will stay like that until started again.
 * `--stop-when-none` - when enabled, the supervisor process will be stopped when there are no processes monitored.
 * `-d` or `--dev` - this is the same as specifying `--foreground`, `--brittle` and `--stop-when-none`. It's ideal when you want to run your application in the foreground when developing it because processes with issues won't just be started blindly.
 
