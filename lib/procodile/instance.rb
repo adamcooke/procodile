@@ -75,15 +75,13 @@ module Procodile
     #
     # Start a new instance of this process
     #
-    def start(&block)
+    def start(options = {}, &block)
       @stopping = false
-      existing_pid = self.pid_from_file
-      if running?(existing_pid)
+      update_pid
+      if running?
         # If the PID in the file is already running, we should just just continue
         # to monitor this process rather than spawning a new one.
-        @pid = existing_pid
         Procodile.log(@process.log_color, description, "Already running with PID #{@pid}")
-        @started_at = File.mtime(self.pid_file_path)
         nil
       else
         if self.process.log_path
