@@ -115,7 +115,9 @@ Procdile can tell you its current status by running the `status` command. This w
 $ procodile status
 ```
 
-![Screenshot](https://share.adam.ac/16/NJBJBczv.png)
+#### Additional options for stop
+
+* `--json` - returns the status information as a JSON hash
 
 ### Reloading configuration
 
@@ -138,6 +140,10 @@ Sometimes you need to change the quantity of processes that are running in situ.
 ```
 $ procodile check_concurrency
 ```
+
+#### Additional options for check concurrency
+
+* `--no-reload` - by default, running `check_concurrency` will reload the configuration before checking. You can pass this option to simply check concurrency against that data in memory from the last time the config was loaded.
 
 ### Killing everything
 
