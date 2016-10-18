@@ -200,7 +200,7 @@ module Procodile
     #
     # Check the status of this process and handle as appropriate.
     #
-    def check
+    def check(options = {})
       # Don't do any checking if we're in the midst of a restart
       return if @restarting
       return if unmonitored?
@@ -216,7 +216,7 @@ module Procodile
         if @respawnable
           if can_respawn?
             Procodile.log(@process.log_color, description, "Process has stopped. Respawning...")
-            start
+            options[:on_start] ? start(&options[:on_start]) : start
             add_respawn
           elsif respawns >= @process.max_respawns
             Procodile.log(@process.log_color, description, "\e[41;37mWarning:\e[0m\e[31m this process has been respawned #{respawns} times and keeps dying.\e[0m")

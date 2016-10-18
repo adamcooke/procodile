@@ -113,7 +113,7 @@ module Procodile
       # Check all instances that we manage and let them do their things.
       @processes.each do |_, instances|
         instances.each do |instance|
-          instance.check
+          instance.check(:on_start => proc { |_, io| add_reader(instance, io) })
           if instance.unmonitored?
             if @run_options[:brittle]
               Procodile.log nil, "system", "Stopping everything because a process has died in brittle mode."
