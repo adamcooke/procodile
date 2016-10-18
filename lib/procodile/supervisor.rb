@@ -110,6 +110,9 @@ module Procodile
       # Remove processes that have been stopped
       remove_stopped_instances
 
+      # Remove removed processes
+      remove_removed_processes
+
       # Check all instances that we manage and let them do their things.
       @processes.each do |_, instances|
         instances.each do |instance|
@@ -251,6 +254,12 @@ module Procodile
             false
           end
         end
+      end
+    end
+
+    def remove_removed_processes
+      @processes.reject! do |process, instances|
+        process.removed && instances.empty?
       end
     end
 

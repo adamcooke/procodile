@@ -8,6 +8,7 @@ module Procodile
     attr_accessor :command
     attr_accessor :options
     attr_accessor :log_color
+    attr_accessor :removed
 
     def initialize(config, name, command, options = {})
       @config = config
@@ -84,7 +85,8 @@ module Procodile
         :respawn_window => self.respawn_window,
         :command => self.command,
         :restart_mode => self.restart_mode,
-        :log_path => self.log_path
+        :log_path => self.log_path,
+        :removed => self.removed ? true : false
       }
     end
 

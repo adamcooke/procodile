@@ -316,12 +316,12 @@ module Procodile
         if processes.empty?
           raise Error, "No process names provided"
         end
-        processes.each do |process|
-          process_name, _ = process.split('.', 2)
-          unless @config.process_list.keys.include?(process_name.to_s)
-            raise Error, "Process '#{process_name}' is not configured. You may need to reload your config."
-          end
-        end
+        #processes.each do |process|
+        #  process_name, _ = process.split('.', 2)
+        #  unless @config.process_list.keys.include?(process_name.to_s)
+        #    raise Error, "Process '#{process_name}' is not configured. You may need to reload your config."
+        #  end
+        #end
         processes
       else
         nil
