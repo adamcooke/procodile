@@ -236,6 +236,7 @@ module Procodile
         if @options[:json]
           puts stats.to_json
         else
+          puts "|| app directory is #{stats['root']}"
           puts "|| supervisor pid #{stats['supervisor']['pid']}"
           if time = stats['supervisor']['started_at']
             time = Time.at(time)

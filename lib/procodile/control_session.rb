@@ -55,6 +55,8 @@ module Procodile
 
       processes = @supervisor.processes.keys.map(&:to_hash)
       result = {
+        :root => @supervisor.config.root,
+        :app_name => @supervisor.config.app_name,
         :supervisor => @supervisor.to_hash,
         :instances => instances,
         :processes => processes
