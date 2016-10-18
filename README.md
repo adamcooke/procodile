@@ -10,16 +10,10 @@ Procodile works out of the box with your existing `Procfile`.
 
 ## Installing
 
-To get started, just install the Procodile gem on your server:
+To get started, just install the Procodile gem on your server (or local machine). It is recommended to install Procodile as a system gem rather than as part of an existing bundle.
 
 ```
 [sudo] gem install procodile
-```
-
-Or, if you'd prefer you can just put it in your `Gemfile`.
-
-```ruby
-gem 'procodile', '~> 1.0.0'
 ```
 
 ## Configuring your application
