@@ -4,7 +4,7 @@ env:
   SMTP_USERNAME: test123123
 processes:
   web:
-    quantity: 2
+    quantity: 3
     max_respawns: 2
     #log_path: log/webwebweb.log
   worker:
