@@ -172,6 +172,7 @@ module Procodile
 
     def watch_for_output
       Thread.new do
+        buffer = {}
         loop do
           io = IO.select([@signal_handler.pipe[:reader]] + @readers.keys, nil, nil, 30)
           @signal_handler.handle
@@ -184,13 +185,19 @@ module Procodile
               end
 
               if reader.eof?
+                reader.close
+                buffer.delete(reader)
                 @readers.delete(reader)
               else
-                data = reader.gets
-                if instance = @readers[reader]
-                  Procodile.log instance.process.log_color, instance.description, "=> ".color(instance.process.log_color) + data
-                else
-                  Procodile.log nil, 'unknown', data
+                buffer[reader] ||= ""
+                buffer[reader] << reader.read_nonblock(4096)
+                while buffer[reader].index("\n")
+                  line, buffer[reader] = buffer[reader].split("\n", 2)
+                  if instance = @readers[reader]
+                    Procodile.log instance.process.log_color, instance.description, "=> ".color(instance.process.log_color) + line
+                  else
+                    Procodile.log nil, 'unknown', data
+                  end
                 end
               end
             end
