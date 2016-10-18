@@ -7,20 +7,50 @@ require 'procodile/control_client'
 module Procodile
   class CLI
 
+    def self.commands
+      @commands ||= {}
+    end
+
+    def self.desc(description)
+      @description = description
+    end
+
+    def self.command(name)
+      commands[name] = {:name => name, :description => @description}
+      @description = nil
+    end
+
     def initialize(config, cli_options = {})
       @config = config
       @cli_options = cli_options
     end
 
     def run(command)
-      if self.class.instance_methods(false).include?(command.to_sym) && command != 'run'
+      if self.class.commands.keys.include?(command.to_sym)
         public_send(command)
       else
         raise Error, "Invalid command '#{command}'"
       end
     end
 
-    def start
+    desc "Shows this help output"
+    command def help
+      puts "\e[45;37mWelcome to Procodile\e[0m"
+      puts "For documentation see https://adam.ac/procodile."
+      puts
+
+      puts "The following commands are supported:"
+      puts
+      self.class.commands.each do |method, options|
+        puts "  \e[34m#{method.to_s.ljust(15, ' ')}\e[0m #{options[:description]}"
+      end
+      puts
+      puts "For details for the options available for each command, use the --help option."
+      puts "For example 'procodile start --help'."
+    end
+
+    desc "Starts processes and/or the supervisor"
+    command def start
       if running?
         instances = ControlClient.run(@config.sock_path, 'start_processes', :processes => process_names_from_cli_option)
         if instances.empty?
@@ -63,7 +93,8 @@ module Procodile
       end
     end
 
-    def stop
+    desc "Stops processes and/or the supervisor"
+    command def stop
       if running?
         options = {}
         instances = ControlClient.run(@config.sock_path, 'stop', :processes => process_names_from_cli_option, :stop_supervisor => @cli_options[:stop_supervisor])
@@ -79,7 +110,8 @@ module Procodile
       end
     end
 
-    def restart
+    desc "Restart processes"
+    command def restart
       if running?
         options = {}
         instances = ControlClient.run(@config.sock_path, 'restart', :processes => process_names_from_cli_option)
@@ -95,7 +127,8 @@ module Procodile
       end
     end
 
-    def stop_supervisor
+    desc "Stop the supervisor without stopping processes"
+    command def stop_supervisor
       if running?
         ::Process.kill('TERM', current_pid)
         puts "Supervisor will be stopped in a moment."
@@ -104,7 +137,8 @@ module Procodile
       end
     end
 
-    def reload_config
+    desc "Reload Procodile configuration"
+    command def reload_config
       if running?
         ControlClient.run(@config.sock_path, 'reload_config')
         puts "Reloading config for #{@config.app_name}"
@@ -113,7 +147,8 @@ module Procodile
       end
     end
 
-    def status
+    desc "Show the current status of processes"
+    command def status
       if running?
         stats = ControlClient.run(@config.sock_path, 'status')
         if @cli_options[:json]
@@ -158,7 +193,8 @@ module Procodile
       end
     end
 
-    def kill
+    desc "Forcefully kill all known processes"
+    command def kill
       Dir[File.join(@config.pid_root, '*.pid')].each do |pid_path|
         name = pid_path.split('/').last.gsub(/\.pid\z/, '')
         pid = File.read(pid_path).to_i

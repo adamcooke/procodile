@@ -4,12 +4,12 @@ require 'fileutils'
 $:.unshift(File.expand_path('../../lib', __FILE__))
 require 'procodile'
 
-command = ARGV[0]
+command = ARGV[0] || 'help'
 
 options = {}
 begin
   OptionParser.new do |opts|
-    opts.banner = "Usage: procodile [command] [options]"
+    opts.banner = "Usage: procodile #{command} [options]"
     opts.on("-r", "--root PATH", "The path to the root of your application") do |root|
       options[:root] = root
     end
@@ -68,7 +68,11 @@ require 'procodile/cli'
 
 Thread.abort_on_exception = true
 begin
-  config = Procodile::Config.new(options[:root] ? File.expand_path(options[:root]) : FileUtils.pwd)
+  if command != 'help'
+    config = Procodile::Config.new(options[:root] ? File.expand_path(options[:root]) : FileUtils.pwd)
+  else
+    config = nil
+  end
   cli = Procodile::CLI.new(config, options)
   cli.run(command)
 rescue Procodile::Error => e
