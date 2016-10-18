@@ -2,6 +2,7 @@
 
 ## v1.0.4
 
+* Process IDs will now increase upto a maximum of 10000 at which point they will circle back to 1 whenever processes are restarted (except when using usr1 or usr2 restart modes). This allows old disgarded processes to remain monitored until they are finally fully dead.
 * Sets the name of the procodile supervisor process to `[procodile] App Name (root)`
 * Removes `stop_supervisor` method. The supervisor can only be stopped by sending it a TERM signal manually or through `stop --stop-supervisor`
 * Changes to `start`. By default, this will now start the supervisor if it's not running and then any processes required. To just start the supervisor, you can use `start --no-processes` and to avoid the behaviour where the supervisor is started when it's not running you can pass `--no-supervisor`.

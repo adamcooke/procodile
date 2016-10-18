@@ -39,8 +39,8 @@ module Procodile
       reload_config
       Array.new.tap do |instances_started|
         @config.processes.each do |name, process|
-          next if types && !types.include?(name.to_s) # Not a process we want
-          next if @processes[process] && !@processes[process].empty?   # Process type already running
+          next if types && !types.include?(name.to_s)                   # Not a process we want
+          next if @processes[process] && !@processes[process].empty?    # Process type already running
           instances = start_instances(process.generate_instances)
           instances_started.push(*instances)
         end
@@ -77,22 +77,23 @@ module Procodile
       Array.new.tap do |instances_restarted|
         if options[:processes].nil?
           Procodile.log nil, "system", "Restarting all #{@config.app_name} processes"
-          @processes.each do |_, instances|
-            instances.each do |instance|
-              instance.restart { |_, io| add_reader(instance, io) }
-              instances_restarted << instance
-            end
-          end
-          instances_restarted.push(*check_instance_quantities[:started])
+          instances = @processes.values.flatten
         else
           instances = process_names_to_instances(options[:processes])
           Procodile.log nil, "system", "Restarting #{instances.size} process(es)"
-          instances.each do |instance|
-            instance.restart { |_, io| add_reader(instance, io) }
-            instances_restarted << instance
-          end
-          instances_restarted.push(*check_instance_quantities(options[:processes])[:started])
         end
+
+        # Stop any processes that are no longer wanted at this point
+        instances_restarted.push(*check_instance_quantities(:stopped, options[:processes])[:stopped].map { |i| [i, nil]})
+
+        instances.each do |instance|
+          next if instance.stopping?
+          new_instance = instance.restart { |instance| start_instance(instance) }
+          instances_restarted << [instance, new_instance]
+        end
+
+        # Start any processes that are needed at this point
+        instances_restarted.push(*check_instance_quantities(:started, options[:processes])[:started].map { |i| [nil, i]})
       end
     end
 
@@ -209,33 +210,45 @@ module Procodile
       end
     end
 
-    def check_instance_quantities(processes = nil)
+    def check_instance_quantities(type = :both, processes = nil)
       {:started => [], :stopped => []}.tap do |status|
         @processes.each do |process, instances|
           next if processes && !processes.include?(process.name)
-          if instances.size > process.quantity
-            quantity_to_stop = instances.size - process.quantity
-            Procodile.log nil, "system", "Stopping #{quantity_to_stop} #{process.name} process(es)"
-            status[:stopped] = instances.last(quantity_to_stop).each(&:stop)
-          elsif instances.size < process.quantity
-            quantity_needed = process.quantity - instances.size
-            start_id = instances.last ? instances.last.id + 1 : 1
-            Procodile.log nil, "system", "Starting #{quantity_needed} more #{process.name} process(es) (start with #{start_id})"
-            status[:started] = start_instances(process.generate_instances(quantity_needed, start_id))
+          active_instances = instances.select(&:running?)
+
+          if type == :both || type == :stopped
+            if active_instances.size > process.quantity
+              quantity_to_stop = active_instances.size - process.quantity
+              Procodile.log nil, "system", "Stopping #{quantity_to_stop} #{process.name} process(es)"
+              status[:stopped] = active_instances.last(quantity_to_stop).each(&:stop)
+            end
           end
+
+          if type == :both || type == :started
+            if active_instances.size < process.quantity
+              quantity_needed = process.quantity - active_instances.size
+              Procodile.log nil, "system", "Starting #{quantity_needed} more #{process.name} process(es)"
+              status[:started] = start_instances(process.generate_instances(quantity_needed))
+            end
+          end
+
         end
       end
     end
 
     def start_instances(instances)
       instances.each do |instance|
-        if @run_options[:brittle]
-          instance.respawnable = false
-        end
-        instance.start { |_, io| add_reader(instance, io) }
-        @processes[instance.process] ||= []
-        @processes[instance.process] << instance
+        start_instance(instance)
       end
+    end
+
+    def start_instance(instance)
+      if @run_options[:brittle]
+        instance.respawnable = false
+      end
+      instance.start { |_, io| add_reader(instance, io) }
+      @processes[instance.process] ||= []
+      @processes[instance.process] << instance
     end
 
     def remove_unmonitored_instances

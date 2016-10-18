@@ -47,11 +47,7 @@ module Procodile
         else
           instances.each do |instance|
             print "|| => ".color(process['log_color']) + instance['description'].to_s.ljust(17, ' ').color(process['log_color'])
-            if instance['running']
-              print 'Running'.color("32")
-            else
-              print 'Stopped'.color("31")
-            end
+            print instance['status'].ljust(10, ' ')
             print "   " + formatted_timestamp(instance['started_at']).ljust(10, ' ')
             print "   pid: " + instance['pid'].to_s.ljust(7, ' ')
             print "   respawns: " + instance['respawns'].to_s.ljust(7, ' ')

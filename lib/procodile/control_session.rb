@@ -14,7 +14,6 @@ module Procodile
       options = JSON.parse(options)
       if self.class.instance_methods(false).include?(command.to_sym) && command != 'receive_data'
         begin
-          Procodile.log nil, 'control', "Received #{command} command"
           public_send(command, options)
         rescue Procodile::Error => e
           Procodile.log nil, 'control', "Error: #{e.message}".color(31)
@@ -37,7 +36,7 @@ module Procodile
 
     def restart(options)
       instances = @supervisor.restart(:processes => options['processes'])
-      "200 " + instances.map(&:to_hash).to_json
+      "200 " + instances.map { |a| a.map { |i| i ? i.to_hash : nil } }.to_json
     end
 
     def reload_config(options)

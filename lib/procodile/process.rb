@@ -3,6 +3,8 @@ require 'procodile/instance'
 module Procodile
   class Process
 
+    MUTEX = Mutex.new
+
     attr_reader :config
     attr_reader :name
     attr_accessor :command
@@ -16,6 +18,17 @@ module Procodile
       @command = command
       @options = options
       @log_color = 0
+      @instance_index = 0
+    end
+
+    #
+    # Increase the instance index and return
+    #
+    def get_instance_id
+      MUTEX.synchronize do
+        @instance_index = 0 if @instance_index == 10000
+        @instance_index += 1
+      end
     end
 
     #
@@ -69,8 +82,15 @@ module Procodile
     #
     # Generate an array of new instances for this process (based on its quantity)
     #
-    def generate_instances(quantity = self.quantity, start_number = 1)
-      quantity.times.map { |i| Instance.new(self, i + start_number) }
+    def generate_instances(quantity = self.quantity)
+      quantity.times.map { |i| create_instance }
+    end
+
+    #
+    # Create a new instance
+    #
+    def create_instance
+      Instance.new(self, get_instance_id)
     end
 
     #

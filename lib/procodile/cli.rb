@@ -191,8 +191,15 @@ module Procodile
         if instances.empty?
           puts "There are no processes to restart."
         else
-          instances.each do |instance|
-            puts "Restarted".color(35) + " #{instance['description']} (PID: #{instance['pid']})"
+          instances.each do |old_instance, new_instance|
+            if old_instance && new_instance
+              puts "Restarted".color(35) + " #{old_instance['description']} -> #{new_instance['description']}"
+            elsif old_instance
+              puts "Stopped".color(31) + " #{old_instance['description']}"
+            elsif new_instance
+              puts "Started".color(32) + " #{new_instance['description']}"
+            end
+            $stdout.flush
           end
         end
       else

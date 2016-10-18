@@ -24,6 +24,21 @@ module Procodile
     end
 
     #
+    # Return the status of this instance
+    #
+    def status
+      if stopped?
+        'Stopped'
+      elsif stopping?
+        'Stopping'
+      elsif running?
+        'Running'
+      else
+        'Unknown'
+      end
+    end
+
+    #
     # Return an array of environment variables that should be set
     #
     def environment_variables
@@ -62,9 +77,9 @@ module Procodile
     #
     # Is this process running? Pass an option to check the given PID instead of the instance
     #
-    def running?(force_pid = nil)
-      if force_pid || @pid
-        ::Process.getpgid(force_pid || @pid) ? true : false
+    def running?
+      if @pid
+        ::Process.getpgid(@pid) ? true : false
       else
         false
       end
@@ -76,7 +91,11 @@ module Procodile
     # Start a new instance of this process
     #
     def start(options = {}, &block)
-      @stopping = false
+      if stopping?
+        Procodile.log(@process.log_color, description, "Process is stopped/stopping therefore cannot be started again.")
+        return false
+      end
+
       update_pid
       if running?
         # If the PID in the file is already running, we should just just continue
@@ -112,7 +131,14 @@ module Procodile
     # Is this instance supposed to be stopping/be stopped?
     #
     def stopping?
-      @stopping || false
+      @stopping ? true : false
+    end
+
+    #
+    # Is this stopped?
+    #
+    def stopped?
+      @stopped || false
     end
 
     #
@@ -120,7 +146,7 @@ module Procodile
     # tells us that we want it to be stopped.
     #
     def stop
-      @stopping = true
+      @stopping = Time.now
       update_pid
       if self.running?
         Procodile.log(@process.log_color, description, "Sending #{@process.term_signal} to #{@pid}")
@@ -136,6 +162,7 @@ module Procodile
     #
     def on_stop
       @started_at = nil
+      @stopped = true
       tidy
       unmonitor
     end
@@ -153,7 +180,6 @@ module Procodile
     #
     def restart(&block)
       Procodile.log(@process.log_color, description, "Restarting using #{@process.restart_mode} mode")
-      @restarting = true
       update_pid
       case @process.restart_mode
       when 'usr1', 'usr2'
@@ -162,23 +188,30 @@ module Procodile
           Procodile.log(@process.log_color, description, "Sent #{@process.restart_mode.upcase} signal to process #{@pid}")
         else
           Procodile.log(@process.log_color, description, "Process not running already. Starting it.")
-          start(&block)
+          on_stop
+          block.call(@process.create_instance)
         end
+        nil
       when 'start-term'
-        old_process_pid = @pid
-        start(&block)
-        Procodile.log(@process.log_color, description, "Sent #{@process.term_signal} signal to old PID #{old_process_pid} (forgetting now)")
-        ::Process.kill(@process.term_signal, old_process_pid)
-      when 'term-start'
+        # Create a new instance and start it
+        new_instance = @process.create_instance
+        block.call(new_instance)
+        # Send a term to the old one
         stop
+        # Return the instance
+        new_instance
+      when 'term-start'
+        # Stop our process
+        stop
+        new_instance = @process.create_instance
         Thread.new do
-          # Wait for this process to stop and when it has, run it.
+          # Wait for this process to stop
           sleep 0.5 while running?
-          start(&block)
+          # When it's no running, create the new one
+          block.call(new_instance)
         end
+        new_instance
       end
-    ensure
-      @restarting = false
     end
 
     #
@@ -201,7 +234,6 @@ module Procodile
     #
     def check(options = {})
       # Don't do any checking if we're in the midst of a restart
-      return if @restarting
       return if unmonitored?
 
       if self.running?
@@ -276,6 +308,7 @@ module Procodile
         :description => self.description,
         :pid => self.pid,
         :respawns => self.respawns,
+        :status => self.status,
         :running => self.running?,
         :started_at => @started_at ? @started_at.to_i : nil
       }
