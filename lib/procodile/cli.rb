@@ -232,44 +232,12 @@ module Procodile
     end
     command def status
       if running?
-        stats = ControlClient.run(@config.sock_path, 'status')
+        status = ControlClient.run(@config.sock_path, 'status')
         if @options[:json]
-          puts stats.to_json
+          puts status.to_json
         else
-          puts "|| app directory is #{stats['root']}"
-          puts "|| supervisor pid #{stats['supervisor']['pid']}"
-          if time = stats['supervisor']['started_at']
-            time = Time.at(time)
-            puts "|| supervisor started at #{time.to_s}"
-          end
-          puts
-
-          stats['processes'].each_with_index do |process, index|
-            puts unless index == 0
-            puts "|| ".color(process['log_color']) + process['name'].color(process['log_color'])
-            puts "||".color(process['log_color']) + " Quantity            " + process['quantity'].to_s
-            puts "||".color(process['log_color']) + " Command             " + process['command']
-            puts "||".color(process['log_color']) + " Respawning          " + "#{process['max_respawns']} every #{process['respawn_window']} seconds"
-            puts "||".color(process['log_color']) + " Restart mode        " + process['restart_mode']
-            puts "||".color(process['log_color']) + " Log path            " + (process['log_path'] || "none specified")
-            instances = stats['instances'][process['name']]
-            if instances.empty?
-              puts "||".color(process['log_color']) + " No processes running."
-            else
-              instances.each do |instance|
-                print "|| => ".color(process['log_color']) + instance['description'].to_s.ljust(17, ' ').color(process['log_color'])
-                if instance['running']
-                  print 'Running'.color("32")
-                else
-                  print 'Stopped'.color("31")
-                end
-                print "   " + formatted_timestamp(instance['started_at']).ljust(10, ' ')
-                print "   pid: " + instance['pid'].to_s.ljust(7, ' ')
-                print "   respawns: " + instance['respawns'].to_s.ljust(7, ' ')
-                puts
-              end
-            end
-          end
+          require 'procodile/status_cli_output'
+          StatusCLIOutput.new(status).print_all
         end
       else
         puts "#{@config.app_name} supervisor not running"
@@ -345,16 +313,6 @@ module Procodile
         processes
       else
         nil
-      end
-    end
-
-    def formatted_timestamp(timestamp)
-      return '' if timestamp.nil?
-      timestamp = Time.at(timestamp)
-      if timestamp > (Time.now - (60 * 60 * 24))
-        timestamp.strftime("%H:%M")
-      else
-        timestamp.strftime("%d/%m/%Y")
       end
     end
 
