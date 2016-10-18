@@ -1,4 +1,7 @@
 app_name: BananaApp
+env:
+  SMTP_HOSTNAME: smtp.deliverhq.com
+  SMTP_USERNAME: test123123
 processes:
   web:
     quantity: 2

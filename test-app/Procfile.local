@@ -1,3 +1,5 @@
+env:
+  SMTP_USERNAME: bananas
 processes:
   web:
-    quantity: 3
+    quantity: 2
