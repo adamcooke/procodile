@@ -2,6 +2,7 @@
 
 ## v1.0.4
 
+* Adds a proxy for development use (see docs)
 * Adds support for environment variables that can be set on a per-process basis. Just add an `env` hash.
 * Removes `--brittle` option and replaces it with `--no-respawn`.
 * Add process tagging so instances can be tagged with a version (or whatever)

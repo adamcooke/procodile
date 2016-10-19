@@ -8,6 +8,7 @@ module Procodile
     attr_reader :processes
     attr_reader :started_at
     attr_reader :tag
+    attr_reader :tcp_proxy
 
     def initialize(config, run_options = {})
       @config = config

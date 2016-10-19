@@ -41,6 +41,7 @@ module Procodile
         puts "||".color(process['log_color']) + " Respawning          " + "#{process['max_respawns']} every #{process['respawn_window']} seconds"
         puts "||".color(process['log_color']) + " Restart mode        " + process['restart_mode']
         puts "||".color(process['log_color']) + " Log path            " + (process['log_path'] || "none specified")
+        puts "||".color(process['log_color']) + " Address/Port        " + (process['proxy_port'] ? "#{process['proxy_address']}:#{process['proxy_port']}" : "none")
         instances = @status['instances'][process['name']]
         if instances.empty?
           puts "||".color(process['log_color']) + " No processes running."
@@ -49,9 +50,10 @@ module Procodile
             print "|| => ".color(process['log_color']) + instance['description'].to_s.ljust(17, ' ').color(process['log_color'])
             print instance['status'].ljust(10, ' ')
             print "   " + formatted_timestamp(instance['started_at']).ljust(10, ' ')
-            print "   pid: " + instance['pid'].to_s.ljust(7, ' ')
-            print "   respawns: " + instance['respawns'].to_s.ljust(7, ' ')
-            print "   tag: " + instance['tag'].to_s
+            print "   " + instance['pid'].to_s.ljust(6, ' ')
+            print "   " + instance['respawns'].to_s.ljust(4, ' ')
+            print "   " + (instance['port'] || "-").to_s.ljust(6, ' ')
+            print "   " + (instance['tag'] || "-").to_s
             puts
           end
         end

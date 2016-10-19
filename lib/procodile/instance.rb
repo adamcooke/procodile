@@ -100,7 +100,7 @@ module Procodile
         nil
       else
 
-        if @process.proxy?
+        if @process.proxy? && @supervisor.tcp_proxy
           allocate_port
         end
 
@@ -300,7 +300,8 @@ module Procodile
         :status => self.status,
         :running => self.running?,
         :started_at => @started_at ? @started_at.to_i : nil,
-        :tag => self.tag
+        :tag => self.tag,
+        :port => @port
       }
     end
 

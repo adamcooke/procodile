@@ -102,8 +102,16 @@ module Procodile
     # Return the port for the proxy to listen on for this process type
     #
     def proxy_port
-      @options['proxy_port'].to_i
+      proxy? ? @options['proxy_port'].to_i : nil
     end
+
+    #
+    # Return the port for the proxy to listen on for this process type
+    #
+    def proxy_address
+      proxy? ? @options['proxy_address'] || '127.0.0.1' : nil
+    end
+
 
     #
     # Generate an array of new instances for this process (based on its quantity)
@@ -132,7 +140,9 @@ module Procodile
         :command => self.command,
         :restart_mode => self.restart_mode,
         :log_path => self.log_path,
-        :removed => self.removed ? true : false
+        :removed => self.removed ? true : false,
+        :proxy_port => proxy_port,
+        :proxy_address => proxy_address
       }
     end
 

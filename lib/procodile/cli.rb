@@ -370,9 +370,11 @@ module Procodile
       processes = process_names_from_cli_option
 
       if @options[:clean]
-        FileUtils.rm_f(File.join(@config.pid_root, '*'))
-        puts "Removed all old pid & sock files"
-      elsif !Dir[File.join(@config.pid_root, "*")].empty?
+        FileUtils.rm_rf(Dir[File.join(@config.pid_root, '*')])
+        puts "Emptied PID directory"
+      end
+
+      if !Dir[File.join(@config.pid_root, "*")].empty?
         raise Error, "The PID directory (#{@config.pid_root}) is not empty. Cannot start unless things are clean."
       end
 

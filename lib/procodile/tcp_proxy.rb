@@ -25,10 +25,13 @@ module Procodile
 
     def add_process(process)
       if process.proxy?
-        @listeners[TCPServer.new('127.0.0.1', process.proxy_port)] = process
-        Procodile.log nil, 'proxy', "Proxying traffic on 127.0.0.1:#{process.proxy_port} to #{process.name}"
+        @listeners[TCPServer.new(process.proxy_address, process.proxy_port)] = process
+        Procodile.log nil, 'proxy', "Proxying traffic on #{process.proxy_address}:#{process.proxy_port} to #{process.name}".color(32)
         @sp_writer.write_nonblock('.')
       end
+    rescue => e
+      Procodile.log nil, 'proxy', "Exception: #{e.class}: #{e.message}"
+      Procodile.log nil, 'proxy', e.backtrace[0,5].join("\n")
     end
 
     def remove_process(process)
@@ -62,7 +65,7 @@ module Procodile
         end
       end
     rescue => e
-      Procodile.log nil, 'proxy', "Exception: #{e.class}: #{e.class}"
+      Procodile.log nil, 'proxy', "Exception: #{e.class}: #{e.message}"
       Procodile.log nil, 'proxy', e.backtrace[0,5].join("\n")
     end
 
@@ -98,7 +101,7 @@ module Procodile
         end
       end
     rescue => e
-      Procodile.log nil, 'proxy', "Exception: #{e.class}: #{e.class}"
+      Procodile.log nil, 'proxy', "Exception: #{e.class}: #{e.message}"
       Procodile.log nil, 'proxy', e.backtrace[0,5].join("\n")
     ensure
       backend_socket.close rescue nil
