@@ -154,7 +154,7 @@ module Procodile
         cli.options[:processes] = processes
       end
 
-      opts.on("-s", "--stop-supervisor", "Stop the ") do
+      opts.on("-s", "--stop-supervisor", "Stop the supervisor process when all processes are stopped") do
         cli.options[:stop_supervisor] = true
       end
     end
