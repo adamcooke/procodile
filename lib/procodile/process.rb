@@ -92,6 +92,20 @@ module Procodile
     end
 
     #
+    # Is this process enabled for proxying?
+    #
+    def proxy?
+      @options.has_key?('proxy_port')
+    end
+
+    #
+    # Return the port for the proxy to listen on for this process type
+    #
+    def proxy_port
+      @options['proxy_port'].to_i
+    end
+
+    #
     # Generate an array of new instances for this process (based on its quantity)
     #
     def generate_instances(supervisor, quantity = self.quantity)

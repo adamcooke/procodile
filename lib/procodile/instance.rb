@@ -7,6 +7,7 @@ module Procodile
     attr_reader :id
     attr_accessor :process
     attr_reader :tag
+    attr_reader :port
 
     def initialize(supervisor, process, id)
       @supervisor = supervisor
@@ -44,10 +45,12 @@ module Procodile
     # Return an array of environment variables that should be set
     #
     def environment_variables
-      @process.environment_variables.merge({
+      vars = @process.environment_variables.merge({
         'PID_FILE' => self.pid_file_path,
         'APP_ROOT' => @process.config.root
       })
+      vars['PORT'] = @port.to_s if @port
+      vars
     end
 
     #
@@ -96,6 +99,11 @@ module Procodile
         Procodile.log(@process.log_color, description, "Already running with PID #{@pid}")
         nil
       else
+
+        if @process.proxy?
+          allocate_port
+        end
+
         if self.process.log_path
           log_destination = File.open(self.process.log_path, 'a')
           io = nil
@@ -294,6 +302,24 @@ module Procodile
         :started_at => @started_at ? @started_at.to_i : nil,
         :tag => self.tag
       }
+    end
+
+
+    #
+    # Find a port number for this instance to listen on. We just check that nothing is already listening on it.
+    # The process is expected to take it straight away if it wants it.
+    #
+    def allocate_port
+      until @port
+        possible_port = rand(10000) + 20000
+        begin
+          server = TCPServer.new('127.0.0.1', possible_port)
+          server.close
+          return @port = possible_port
+        rescue
+          # Nah.
+        end
+      end
     end
 
   end

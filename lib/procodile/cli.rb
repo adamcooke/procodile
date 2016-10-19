@@ -45,6 +45,12 @@ module Procodile
     # Help
     #
 
+    command def proxy
+      require 'procodile/tcp_proxy'
+      p = Procodile::TCPProxy.new(Supervisor.new(@config, {}))
+      p.run
+    end
+
     desc "Shows this help output"
     command def help
       puts "\e[45;37mWelcome to Procodile v#{Procodile::VERSION}\e[0m"
@@ -99,11 +105,16 @@ module Procodile
         cli.options[:stop_when_none] = true
       end
 
+      opts.on("-x", "--proxy", "Enables the Procodile proxy service") do
+        cli.options[:proxy] = true
+      end
+
       opts.on("-d", "--dev", "Run in development mode") do
         cli.options[:development] = true
         cli.options[:respawn] = false
         cli.options[:foreground] = true
         cli.options[:stop_when_none] = true
+        cli.options[:proxy] = true
       end
     end
     command def start
@@ -118,6 +129,10 @@ module Procodile
 
         if @options[:stop_when_none]
           raise Error, "Cannot stop supervisor when none running because supervisor is already running"
+        end
+
+        if @options[:proxy]
+          raise Error, "Cannot enable the proxy when the supervisor is running"
         end
 
         instances = ControlClient.run(@config.sock_path, 'start_processes', :processes => process_names_from_cli_option, :tag => @options[:tag])
@@ -350,6 +365,7 @@ module Procodile
       run_options = {}
       run_options[:respawn] = @options[:respawn]
       run_options[:stop_when_none] = @options[:stop_when_none]
+      run_options[:proxy] = @options[:proxy]
 
       processes = process_names_from_cli_option
 

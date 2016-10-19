@@ -1,4 +1,5 @@
 require 'procodile/control_server'
+require 'procodile/tcp_proxy'
 
 module Procodile
   class Supervisor
@@ -31,6 +32,10 @@ module Procodile
         Procodile.log nil, "system", "Automatic respawning is disabled"
       end
       ControlServer.start(self)
+      if @run_options[:proxy]
+        Procodile.log nil, "system", "Proxy is enabled"
+        @tcp_proxy = TCPProxy.start(self)
+      end
       watch_for_output
       @started_at = Time.now
       after_start.call(self) if block_given?
@@ -259,7 +264,14 @@ module Procodile
 
     def remove_removed_processes
       @processes.reject! do |process, instances|
-        process.removed && instances.empty?
+        if process.removed && instances.empty?
+          if @tcp_proxy
+            @tcp_proxy.remove_process(process)
+          end
+          true
+        else
+          false
+        end
       end
     end
 

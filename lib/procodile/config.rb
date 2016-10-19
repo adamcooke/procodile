@@ -15,6 +15,10 @@ module Procodile
         raise Error, "Procfile not found at #{procfile_path}"
       end
       FileUtils.mkdir_p(pid_root)
+
+      @processes = process_list.each_with_index.each_with_object({}) do |((name, command), index), hash|
+        hash[name] = create_process(name, command, COLORS[index.divmod(COLORS.size)[1]])
+      end
     end
 
     def reload
@@ -56,13 +60,11 @@ module Procodile
     end
 
     def processes
-      @processes ||= process_list.each_with_index.each_with_object({}) do |((name, command), index), hash|
-        hash[name] = create_process(name, command, COLORS[index.divmod(COLORS.size)[1]])
-      end
+      @processes ||= {}
     end
 
     def process_list
-      @process_list ||= YAML.load_file(procfile_path)
+      @process_list ||= YAML.load_file(procfile_path) || {}
     end
 
     def options
