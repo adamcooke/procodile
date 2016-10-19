@@ -108,7 +108,7 @@ module Procodile
 
     def stop_supervisor
       Procodile.log nil, 'system', "Stopping Procodile supervisor"
-      FileUtils.rm_f(File.join(@config.pid_root, 'supervisor.pid'))
+      FileUtils.rm_f(File.join(@config.pid_root, 'procodile.pid'))
       ::Process.exit 0
     end
 

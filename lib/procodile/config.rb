@@ -104,7 +104,7 @@ module Procodile
     end
 
     def sock_path
-      File.join(pid_root, 'supervisor.sock')
+      File.join(pid_root, 'procodile.sock')
     end
 
     private
