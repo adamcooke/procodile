@@ -2,6 +2,7 @@
 
 ## v1.0.4
 
+* Adds support for environment variables that can be set on a per-process basis. Just add an `env` hash.
 * Removes `--brittle` option and replaces it with `--no-respawn`.
 * Add process tagging so instances can be tagged with a version (or whatever)
 * Process IDs will now increase upto a maximum of 10000 at which point they will circle back to 1 whenever processes are restarted (except when using usr1 or usr2 restart modes). This allows old disgarded processes to remain monitored until they are finally fully dead.

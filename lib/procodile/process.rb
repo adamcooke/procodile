@@ -32,6 +32,18 @@ module Procodile
     end
 
     #
+    # Return all environment variables for this process
+    #
+    def environment_variables
+      global_variables = @config.environment_variables
+      process_vars = @config.process_options[@name] ? @config.process_options[@name]['env'] || {} : {}
+      process_local_vars = @config.local_process_options[@name] ? @config.local_process_options[@name]['env'] || {} : {}
+      global_variables.merge(process_vars.merge(process_local_vars)).each_with_object({}) do |(key, value), hash|
+        hash[key.to_s] = value.to_s
+      end
+    end
+
+    #
     # How many instances of this process should be started
     #
     def quantity
