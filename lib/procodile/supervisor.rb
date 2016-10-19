@@ -168,7 +168,9 @@ module Procodile
     def add_instance(instance, io = nil)
       add_reader(instance, io) if io
       @processes[instance.process] ||= []
-      @processes[instance.process] << instance
+      unless @processes[instance.process].include?(instance)
+        @processes[instance.process] << instance
+      end
     end
 
     def remove_instance(instance)
