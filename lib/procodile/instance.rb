@@ -107,6 +107,7 @@ module Procodile
         @tag = @supervisor.tag.dup if @supervisor.tag
         Dir.chdir(@process.config.root)
         @pid = ::Process.spawn(environment_variables, @process.command, :out => log_destination, :err => log_destination, :pgroup => true)
+        log_destination.close
         File.open(pid_file_path, 'w') { |f| f.write(@pid.to_s + "\n") }
         @supervisor.add_instance(self, io)
         ::Process.detach(@pid)
