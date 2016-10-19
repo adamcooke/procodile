@@ -185,7 +185,7 @@ module Procodile
           on_stop
           @process.create_instance(@supervisor).start
         end
-        nil
+        self
       when 'start-term'
         new_instance = @process.create_instance(@supervisor)
         new_instance.start

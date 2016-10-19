@@ -200,7 +200,11 @@ module Procodile
         else
           instances.each do |old_instance, new_instance|
             if old_instance && new_instance
-              puts "Restarted".color(35) + " #{old_instance['description']} -> #{new_instance['description']}"
+              if old_instance['description'] == new_instance['description']
+                puts "Restarted".color(35) + " #{old_instance['description']}"
+              else
+                puts "Restarted".color(35) + " #{old_instance['description']} -> #{new_instance['description']}"
+              end
             elsif old_instance
               puts "Stopped".color(31) + " #{old_instance['description']}"
             elsif new_instance
