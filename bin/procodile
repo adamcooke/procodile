@@ -1,15 +1,6 @@
 #!/usr/bin/env ruby
-$:.unshift(File.expand_path('../../lib', __FILE__))
 
-require 'optparse'
-require 'fileutils'
-require 'procodile'
-require 'procodile/version'
-require 'procodile/error'
-require 'procodile/config'
-require 'procodile/cli'
-
-# Get the root for the application
+require 'yaml'
 global_config_path = ENV['PROCODILE_CONFIG'] || "/etc/procodile"
 if File.exist?(global_config_path)
   global_config = YAML.load_file(global_config_path)
@@ -18,9 +9,23 @@ else
 end
 
 if global_config['user'] && ENV['USER'] != global_config['user']
-  $stderr.puts "Error: Procodile can only be run as #{global_config['user']}".color(31)
-  exit 1
+  if global_config['user_reexec']
+    $stderr.puts "\e[31mProcodile must be run as #{global_config['user']}. Re-executing as #{global_config['user']}...\e[0m"
+    exec "sudo -u #{global_config['user']} -- #{$0} #{ARGV.join(' ')}"
+  else
+    $stderr.puts "\e[31mError: Procodile must be run as #{global_config['user']}\e[0m"
+    exit 1
+  end
 end
+
+$:.unshift(File.expand_path('../../lib', __FILE__))
+require 'optparse'
+require 'fileutils'
+require 'procodile'
+require 'procodile/version'
+require 'procodile/error'
+require 'procodile/config'
+require 'procodile/cli'
 
 Thread.abort_on_exception = true
 
