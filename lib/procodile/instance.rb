@@ -188,6 +188,7 @@ module Procodile
       when 'usr1', 'usr2'
         if running?
           ::Process.kill(@process.restart_mode.upcase, @pid)
+          @tag = @supervisor.tag if @supervisor.tag
           Procodile.log(@process.log_color, description, "Sent #{@process.restart_mode.upcase} signal to process #{@pid}")
         else
           Procodile.log(@process.log_color, description, "Process not running already. Starting it.")
