@@ -3,6 +3,8 @@
 ## v1.0.5
 
 * Adds a system-wide configuration file which can contain a default root directory and the user that much execute the command
+* Sets a `PROC_NAME` environment variable so the process knows its name (perhaps to use in a log entry)
+* If a process is restarted using USR1/USR2 update the tag to match supervisor's at the time.
 
 ## v1.0.4
 

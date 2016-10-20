@@ -46,6 +46,7 @@ module Procodile
     #
     def environment_variables
       vars = @process.environment_variables.merge({
+        'PROC_NAME' => self.description,
         'PID_FILE' => self.pid_file_path,
         'APP_ROOT' => @process.config.root
       })
