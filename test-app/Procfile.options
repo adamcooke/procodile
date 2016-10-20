@@ -4,12 +4,13 @@ env:
   SMTP_USERNAME: test123123
 processes:
   web:
-    quantity: 3
+    quantity: 1
     max_respawns: 2
-    #log_path: log/webwebweb.log
   worker:
-    quantity: 0
+    quantity: 1
     restart_mode: start-term
+    env:
+      PORT: 5123
   cron:
     quantity: 0
     restart_mode: usr1

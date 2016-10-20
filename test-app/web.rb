@@ -6,8 +6,25 @@ puts "Root: #{ENV['APP_ROOT']}"
 puts "PID file: #{ENV['PID_FILE']}"
 puts "SMTP server: #{ENV['SMTP_HOSTNAME']}"
 puts "SMTP user: #{ENV['SMTP_USERNAME']}"
+puts "Port: #{ENV['PORT']}"
+$stdout.flush
+require 'socket'
+server = TCPServer.new('127.0.0.1', ENV['PORT'] || 5000)
 loop do
-  #puts "Something! #{Time.now.to_s}"
-  $stdout.flush
-  sleep 2
+  io = IO.select([server], nil, nil, 0.5)
+  if io && io.first
+    io.first.each do |fd|
+      if client = fd.accept
+        puts "Connection from #{client.addr[3]}"
+        $stdout.flush
+        client.puts "Hello"
+        if data = client.gets
+          client.puts "you sent: #{data}"
+        end
+        puts "Closed connection"
+        $stdout.flush
+        client.close
+      end
+    end
+  end
 end

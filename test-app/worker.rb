@@ -1,6 +1,6 @@
 trap("TERM", proc { $exit = 1; puts("Exiting..."); $stdout.flush })
 
-puts "Working running"
+puts "Working running on #{ENV['PORT']}"
 $stdout.flush
 count = 0
 loop do

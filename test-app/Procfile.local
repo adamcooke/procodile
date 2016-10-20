@@ -2,4 +2,5 @@ env:
   SMTP_USERNAME: bananas
 processes:
   web:
-    quantity: 3
+    proxy_port: 8080
+    quantity: 1
