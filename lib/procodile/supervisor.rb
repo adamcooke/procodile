@@ -1,4 +1,4 @@
-require 'procodile/control_server'
+rrequire 'procodile/control_server'
 require 'procodile/tcp_proxy'
 
 module Procodile
@@ -228,19 +228,18 @@ module Procodile
       {:started => [], :stopped => []}.tap do |status|
         @processes.each do |process, instances|
           next if processes && !processes.include?(process.name)
-          active_instances = instances.select(&:running?)
 
           if type == :both || type == :stopped
-            if active_instances.size > process.quantity
-              quantity_to_stop = active_instances.size - process.quantity
+            if instances.size > process.quantity
+              quantity_to_stop = instances.size - process.quantity
               Procodile.log nil, "system", "Stopping #{quantity_to_stop} #{process.name} process(es)"
-              status[:stopped] = active_instances.last(quantity_to_stop).each(&:stop)
+              status[:stopped] = instances.last(quantity_to_stop).each(&:stop)
             end
           end
 
           if type == :both || type == :started
-            if active_instances.size < process.quantity
-              quantity_needed = process.quantity - active_instances.size
+            if instances.size < process.quantity
+              quantity_needed = process.quantity - instances.size
               Procodile.log nil, "system", "Starting #{quantity_needed} more #{process.name} process(es)"
               status[:started] = process.generate_instances(self, quantity_needed).each(&:start)
             end
