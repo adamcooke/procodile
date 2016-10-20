@@ -1,4 +1,4 @@
-rrequire 'procodile/control_server'
+require 'procodile/control_server'
 require 'procodile/tcp_proxy'
 
 module Procodile
