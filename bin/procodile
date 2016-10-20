@@ -9,6 +9,19 @@ require 'procodile/error'
 require 'procodile/config'
 require 'procodile/cli'
 
+# Get the root for the application
+global_config_path = ENV['PROCODILE_CONFIG'] || "/etc/procodile"
+if File.exist?(global_config_path)
+  global_config = YAML.load_file(global_config_path)
+else
+  global_config = {}
+end
+
+if global_config['user'] && ENV['USER'] != global_config['user']
+  $stderr.puts "Error: Procodile can only be run as #{global_config['user']}".color(31)
+  exit 1
+end
+
 Thread.abort_on_exception = true
 
 command = ARGV[0] || 'help'
@@ -33,7 +46,7 @@ end
 
 begin
   if command != 'help'
-    cli.config = Procodile::Config.new(options[:root] ? File.expand_path(options[:root]) : FileUtils.pwd)
+    cli.config = Procodile::Config.new(options[:root] ? File.expand_path(options[:root]) : global_config['root'] || FileUtils.pwd)
   end
   cli.run(command)
 rescue Procodile::Error => e
