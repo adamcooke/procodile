@@ -1,5 +1,9 @@
 # Changelog
 
+## v1.0.5
+
+* Adds a system-wide configuration file which can contain a default root directory and the user that much execute the command
+
 ## v1.0.4
 
 * Adds a proxy for development use (see docs)
