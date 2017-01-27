@@ -172,6 +172,11 @@ module Procodile
       opts.on("-s", "--stop-supervisor", "Stop the supervisor process when all processes are stopped") do
         cli.options[:stop_supervisor] = true
       end
+
+      opts.on("--wait", "Wait until supervisor has stopped before exiting") do
+        cli.options[:wait_until_supervisor_stopped] = true
+      end
+
     end
     command def stop
       if supervisor_running?
@@ -187,6 +192,19 @@ module Procodile
 
         if @options[:stop_supervisor]
           puts "Supervisor will be stopped when processes are stopped."
+        end
+
+        if @options[:wait_until_supervisor_stopped]
+          puts "Waiting for supervisor to stop..."
+          loop do
+            sleep 1
+            if supervisor_running?
+              sleep 1
+            else
+              puts "Supervisor has stopped"
+              exit 0
+            end
+          end
         end
       else
         raise Error, "Procodile supervisor isn't running"
