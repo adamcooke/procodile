@@ -13,6 +13,7 @@ module Procodile
     def print_header
       puts "Procodile Version   " + @status['version'].to_s.color(34)
       puts "Application Root    " + "#{@status['root']}".color(34)
+      puts "Environment         " + "#{@status['environment']}".color(34)
       puts "Supervisor PID      " + "#{@status['supervisor']['pid']}".color(34)
       if time = @status['supervisor']['started_at']
         time = Time.at(time)

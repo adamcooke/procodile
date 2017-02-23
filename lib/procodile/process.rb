@@ -12,10 +12,11 @@ module Procodile
     attr_accessor :log_color
     attr_accessor :removed
 
-    def initialize(config, name, command, options = {})
+    def initialize(config, name, command, environment, options = {})
       @config = config
       @name = name
       @command = command
+      @environment = environment
       @options = options
       @log_color = 0
       @instance_index = 0

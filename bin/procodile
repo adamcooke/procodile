@@ -40,6 +40,11 @@ begin
     opts.on("-r", "--root PATH", "The path to the root of your application") do |root|
       options[:root] = root
     end
+
+    opts.on("-e", "--environment NAME", "The config environment to use") do |name|
+      options[:environment] = name
+    end
+
     if cli.class.commands[command.to_sym] && option_block = cli.class.commands[command.to_sym][:options]
       option_block.call(opts, cli)
     end
@@ -51,7 +56,7 @@ end
 
 begin
   if command != 'help'
-    cli.config = Procodile::Config.new(options[:root] ? File.expand_path(options[:root]) : global_config['root'] || FileUtils.pwd)
+    cli.config = Procodile::Config.new(options[:root] ? File.expand_path(options[:root]) : global_config['root'] || FileUtils.pwd, options[:environment])
   end
   cli.run(command)
 rescue Procodile::Error => e

@@ -8,9 +8,11 @@ module Procodile
     COLORS = [35, 31, 36, 32, 33, 34]
 
     attr_reader :root
+    attr_reader :environment
 
-    def initialize(root)
+    def initialize(root, environment)
       @root = root
+      @environment = environment || 'production'
       unless File.exist?(procfile_path)
         raise Error, "Procfile not found at #{procfile_path}"
       end
@@ -56,7 +58,7 @@ module Procodile
     end
 
     def app_name
-      @app_name ||= local_options['app_name'] || options['app_name'] || 'Procodile'
+      @app_name ||= fetch(local_options['app_name']) || fetch(options['app_name']) || 'Procodile'
     end
 
     def processes
@@ -88,19 +90,15 @@ module Procodile
     end
 
     def environment_variables
-      (options['env'] || {}).merge(local_options['env'] || {})
-    end
-
-    def local_environment_variables
-      @local_environment_variables ||= local_options['env'] || {}
+      fetch_hash_values(options['env'] || {}).merge(fetch_hash_values(local_options['env'] || {}))
     end
 
     def pid_root
-      @pid_root ||= File.expand_path(local_options['pid_root'] || options['pid_root'] || 'pids', @root)
+      @pid_root ||= File.expand_path(fetch(local_options['pid_root']) || fetch(options['pid_root']) || 'pids', @root)
     end
 
     def log_path
-      @log_path ||= File.expand_path(local_options['log_path'] || options['log_path'] || 'procodile.log', @root)
+      @log_path ||= File.expand_path(fetch(local_options['log_path']) || fetch(options['log_path']) || 'procodile.log', @root)
     end
 
     def sock_path
@@ -125,6 +123,22 @@ module Procodile
       process = Process.new(self, name, command, options_for_process(name))
       process.log_color = log_color
       process
+    end
+
+    def fetch(value, default = nil)
+      if value.is_a?(Hash)
+        value[@environment] || default
+      else
+        value || default
+      end
+    end
+
+    def fetch_hash_values(hash)
+      hash.each_with_object({}) do |(key, value), h|
+        if value = fetch(value)
+          h[key] = value
+        end
+      end
     end
 
   end
