@@ -1,3 +1,5 @@
+require 'procodile/message'
+
 module Procodile
   class StatusCLIOutput
 
@@ -28,6 +30,12 @@ module Procodile
           end
           print key.color(34)
           puts " " + value.to_s
+        end
+      end
+      unless @status['messages'].empty?
+        puts
+        for message in @status['messages']
+          puts "\e[31m * #{Message.parse(message)}\e[0m"
         end
       end
     end

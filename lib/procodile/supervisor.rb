@@ -167,6 +167,21 @@ module Procodile
       }
     end
 
+    def messages
+      messages = []
+      processes.each do |process, process_instances|
+        if process.quantity != process_instances.size
+          messages << {:type => :incorrect_quantity, :process => process.name, :current => process_instances.size, :desired => process.quanaity}
+        end
+        for instance in process_instances
+          if instance.status != 'Running'
+            messages << {:type => :not_running, :instance => instance.description, :status => instance.status}
+          end
+        end
+      end
+      messages
+    end
+
     def add_reader(instance, io)
       @readers[io] = instance
       @signal_handler.notice
