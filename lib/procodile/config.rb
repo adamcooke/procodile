@@ -10,9 +10,10 @@ module Procodile
     attr_reader :root
     attr_reader :environment
 
-    def initialize(root, environment)
+    def initialize(root, environment, procfile = nil)
       @root = root
       @environment = environment || 'production'
+      @procfile = procfile
       unless File.exist?(procfile_path)
         raise Error, "Procfile not found at #{procfile_path}"
       end
@@ -108,15 +109,15 @@ module Procodile
     private
 
     def procfile_path
-      File.join(@root, 'Procfile')
+      @procfile_path || File.join(@root, 'Procfile')
     end
 
     def options_path
-      File.join(@root, 'Procfile.options')
+      procfile_path + ".options"
     end
 
     def local_options_path
-      File.join(@root, 'Procfile.local')
+      procfile_path + ".local"
     end
 
     def create_process(name, command, log_color)

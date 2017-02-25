@@ -45,6 +45,10 @@ begin
       options[:environment] = name
     end
 
+    opts.on("--procfile PATH", "The path to the Procfile (defaults to: Procfile)") do |path|
+      options[:procfile_path] = path
+    end
+
     if cli.class.commands[command.to_sym] && option_block = cli.class.commands[command.to_sym][:options]
       option_block.call(opts, cli)
     end
@@ -56,7 +60,7 @@ end
 
 begin
   if command != 'help'
-    cli.config = Procodile::Config.new(options[:root] ? File.expand_path(options[:root]) : global_config['root'] || FileUtils.pwd, options[:environment])
+    cli.config = Procodile::Config.new(options[:root] ? File.expand_path(options[:root]) : global_config['root'] || FileUtils.pwd, options[:environment], options[:procfile_path])
   end
   cli.run(command)
 rescue Procodile::Error => e
