@@ -45,12 +45,6 @@ module Procodile
     # Help
     #
 
-    command def proxy
-      require 'procodile/tcp_proxy'
-      p = Procodile::TCPProxy.new(Supervisor.new(@config, {}))
-      p.run
-    end
-
     desc "Shows this help output"
     command def help
       puts "\e[45;37mWelcome to Procodile v#{Procodile::VERSION}\e[0m"
