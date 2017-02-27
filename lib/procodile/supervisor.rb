@@ -171,7 +171,7 @@ module Procodile
       messages = []
       processes.each do |process, process_instances|
         if process.quantity != process_instances.size
-          messages << {:type => :incorrect_quantity, :process => process.name, :current => process_instances.size, :desired => process.quanaity}
+          messages << {:type => :incorrect_quantity, :process => process.name, :current => process_instances.size, :desired => process.quantity}
         end
         for instance in process_instances
           if instance.status != 'Running'
