@@ -1,5 +1,15 @@
 # Changelog
 
+## v1.0.7
+
+* Support for environments. An environment can be pased to procodile commands and the appropriate configuration read from the `.options` and `.local` files.
+* Support for a custom `Procfile` path with `--procfile`
+* Adds `status --simple` to return a simple output of the status of the supervisor and all processes. Ideal for consumption by monitoring tools.
+
+## v1.0.6
+
+* Support for --wait on `stop` commands to allow the command to only return when all processes have stopped
+
 ## v1.0.5
 
 * Adds a system-wide configuration file which can contain a default root directory and the user that much execute the command
