@@ -13,7 +13,7 @@ module Procodile
     def initialize(root, environment, procfile = nil)
       @root = root
       @environment = environment || 'production'
-      @procfile = procfile
+      @procfile_path = procfile
       unless File.exist?(procfile_path)
         raise Error, "Procfile not found at #{procfile_path}"
       end
