@@ -99,7 +99,22 @@ module Procodile
     end
 
     def log_path
-      @log_path ||= File.expand_path(fetch(local_options['log_path']) || fetch(options['log_path']) || 'procodile.log', @root)
+      log_path = fetch(local_options['log_path']) || fetch(options['log_path'])
+      if log_path
+        File.expand_path(log_path, @root)
+      elsif log_path.nil? && self.log_root
+        File.join(self.log_root, 'procodile.log')
+      else
+        File.expand_path("procodile.log", @root)
+      end
+    end
+
+    def log_root
+      if log_root = (fetch(local_options['log_root']) || fetch(options['log_root']))
+        File.expand_path(log_root, @root)
+      else
+        nil
+      end
     end
 
     def sock_path
@@ -128,9 +143,13 @@ module Procodile
 
     def fetch(value, default = nil)
       if value.is_a?(Hash)
-        value[@environment] || default
+        if value.has_key?(@environment)
+          value[@environment]
+        else
+          default
+        end
       else
-        value || default
+        value.nil? ? default : value
       end
     end
 

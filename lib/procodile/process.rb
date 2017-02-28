@@ -70,7 +70,19 @@ module Procodile
     # none, output will be written to the supervisor log.
     #
     def log_path
-      @options['log_path'] ? File.expand_path(@options['log_path'], @config.root) : nil
+      @options['log_path'] ? File.expand_path(@options['log_path'], @config.root) : default_log_path
+    end
+
+    #
+    # Return the log path for this process if no log path is provided and split logs
+    # is enabled
+    #
+    def default_log_path
+      if @config.log_root
+        File.join(@config.log_root, "#{@name}.log")
+      else
+        nil
+      end
     end
 
     #

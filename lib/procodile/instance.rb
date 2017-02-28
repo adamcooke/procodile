@@ -121,6 +121,9 @@ module Procodile
         @supervisor.add_instance(self, io)
         ::Process.detach(@pid)
         Procodile.log(@process.log_color, description, "Started with PID #{@pid}" + (@tag ? " (tagged with #{@tag})" : ''))
+        if self.process.log_path
+          Procodile.log(@process.log_color, description, "Logging to #{self.process.log_path}")
+        end
         @started_at = Time.now
       end
     end
