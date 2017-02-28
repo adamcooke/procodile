@@ -34,7 +34,7 @@ module Procodile
       @options = {}
     end
 
-    def run(command)
+    def dispatch(command)
       if self.class.commands.keys.include?(command.to_sym)
         public_send(command)
       else
@@ -332,7 +332,6 @@ module Procodile
     #
     # Kill
     #
-
     desc "Forcefully kill all known processes"
     command def kill
       Dir[File.join(@config.pid_root, '*.pid')].each do |pid_path|
@@ -344,6 +343,28 @@ module Procodile
         rescue Errno::ESRCH
         end
         FileUtils.rm(pid_path)
+      end
+    end
+
+    #
+    # Run a command with a procodile environment
+    #
+    desc "Run a command within the environment"
+    command def run
+      desired_command = ARGV.drop(1).join(' ')
+      exec(@config.environment_variables, desired_command)
+    end
+
+    #
+    # Run the configured console command
+    #
+    desc "Open a console within the environment"
+    command def console
+      if cmd = @config.console_command
+        environment = @config.environment_variables
+        exec(environment, cmd)
+      else
+        raise Error, "No console command has been configured in the Procfile"
       end
     end
 

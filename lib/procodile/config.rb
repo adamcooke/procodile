@@ -62,6 +62,10 @@ module Procodile
       @app_name ||= fetch(local_options['app_name']) || fetch(options['app_name']) || 'Procodile'
     end
 
+    def console_command
+      fetch(local_options['console_command']) || fetch(options['console_command'])
+    end
+
     def processes
       @processes ||= {}
     end

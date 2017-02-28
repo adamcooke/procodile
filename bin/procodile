@@ -62,7 +62,7 @@ begin
   if command != 'help'
     cli.config = Procodile::Config.new(options[:root] ? File.expand_path(options[:root]) : global_config['root'] || FileUtils.pwd, options[:environment], options[:procfile_path])
   end
-  cli.run(command)
+  cli.dispatch(command)
 rescue Procodile::Error => e
   $stderr.puts "Error: #{e.message}".color(31)
   exit 1
