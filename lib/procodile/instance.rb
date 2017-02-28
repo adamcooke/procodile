@@ -105,7 +105,7 @@ module Procodile
           allocate_port
         end
 
-        if self.process.log_path
+        if self.process.log_path && @supervisor.run_options[:force_single_log] != true
           log_destination = File.open(self.process.log_path, 'a')
           io = nil
         else
@@ -121,7 +121,7 @@ module Procodile
         @supervisor.add_instance(self, io)
         ::Process.detach(@pid)
         Procodile.log(@process.log_color, description, "Started with PID #{@pid}" + (@tag ? " (tagged with #{@tag})" : ''))
-        if self.process.log_path
+        if self.process.log_path && io.nil?
           Procodile.log(@process.log_color, description, "Logging to #{self.process.log_path}")
         end
         @started_at = Time.now

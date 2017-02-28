@@ -395,6 +395,7 @@ module Procodile
       run_options[:respawn] = @options[:respawn]
       run_options[:stop_when_none] = @options[:stop_when_none]
       run_options[:proxy] = @options[:proxy]
+      run_options[:force_single_log] = @options[:foreground]
 
       processes = process_names_from_cli_option
 

@@ -9,6 +9,7 @@ module Procodile
     attr_reader :started_at
     attr_reader :tag
     attr_reader :tcp_proxy
+    attr_reader :run_options
 
     def initialize(config, run_options = {})
       @config = config
