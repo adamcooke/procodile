@@ -145,7 +145,7 @@ module Procodile
         if @options[:start_supervisor] == false
           raise Error, "Supervisor is not running and cannot be started because --no-supervisor is set"
         else
-          start_supervisor do |supervisor|
+          self.class.start_supervisor(@config, @options) do |supervisor|
             unless @options[:start_processes] == false
               supervisor.start_processes(process_names_from_cli_option, :tag => @options[:tag])
             end
@@ -381,16 +381,12 @@ module Procodile
     end
 
     def current_pid
-      if File.exist?(pid_path)
-        pid_file = File.read(pid_path).strip
+      if File.exist?(@config.supervisor_pid_path)
+        pid_file = File.read(@config.supervisor_pid_path).strip
         pid_file.length > 0 ? pid_file.to_i : nil
       else
         nil
       end
-    end
-
-    def pid_path
-      File.join(@config.pid_root, 'procodile.pid')
     end
 
     def process_names_from_cli_option
@@ -411,39 +407,37 @@ module Procodile
       end
     end
 
-    def start_supervisor(&after_start)
+    def self.start_supervisor(config, options = {}, &after_start)
       run_options = {}
-      run_options[:respawn] = @options[:respawn]
-      run_options[:stop_when_none] = @options[:stop_when_none]
-      run_options[:proxy] = @options[:proxy]
-      run_options[:force_single_log] = @options[:foreground]
+      run_options[:respawn] = options[:respawn]
+      run_options[:stop_when_none] = options[:stop_when_none]
+      run_options[:proxy] = options[:proxy]
+      run_options[:force_single_log] = options[:foreground]
 
-      processes = process_names_from_cli_option
-
-      if @options[:clean]
-        FileUtils.rm_rf(Dir[File.join(@config.pid_root, '*')])
+      if options[:clean]
+        FileUtils.rm_rf(Dir[File.join(config.pid_root, '*')])
         puts "Emptied PID directory"
       end
 
-      if !Dir[File.join(@config.pid_root, "*")].empty?
-        raise Error, "The PID directory (#{@config.pid_root}) is not empty. Cannot start unless things are clean."
+      if !Dir[File.join(config.pid_root, "*")].empty?
+        raise Error, "The PID directory (#{config.pid_root}) is not empty. Cannot start unless things are clean."
       end
 
-      $0="[procodile] #{@config.app_name} (#{@config.root})"
-      if @options[:foreground]
-        File.open(pid_path, 'w') { |f| f.write(::Process.pid) }
-        Supervisor.new(@config, run_options).start(&after_start)
+      $0="[procodile] #{config.app_name} (#{config.root})"
+      if options[:foreground]
+        File.open(config.supervisor_pid_path, 'w') { |f| f.write(::Process.pid) }
+        Supervisor.new(config, run_options).start(&after_start)
       else
-        FileUtils.rm_f(File.join(@config.pid_root, "*.pid"))
+        FileUtils.rm_f(File.join(config.pid_root, "*.pid"))
         pid = fork do
-          STDOUT.reopen(@config.log_path, 'a')
+          STDOUT.reopen(config.log_path, 'a')
           STDOUT.sync = true
-          STDERR.reopen(@config.log_path, 'a')
+          STDERR.reopen(config.log_path, 'a')
           STDERR.sync = true
-          Supervisor.new(@config, run_options).start(&after_start)
+          Supervisor.new(config, run_options).start(&after_start)
         end
         ::Process.detach(pid)
-        File.open(pid_path, 'w') { |f| f.write(pid) }
+        File.open(config.supervisor_pid_path, 'w') { |f| f.write(pid) }
         puts "Started Procodile supervisor with PID #{pid}"
       end
     end

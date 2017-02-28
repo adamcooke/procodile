@@ -103,6 +103,10 @@ module Procodile
       @pid_root ||= File.expand_path(fetch(local_options['pid_root']) || fetch(options['pid_root']) || 'pids', @root)
     end
 
+    def supervisor_pid_path
+      File.join(pid_root, 'procodile.pid')
+    end
+
     def log_path
       log_path = fetch(local_options['log_path']) || fetch(options['log_path'])
       if log_path
