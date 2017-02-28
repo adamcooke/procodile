@@ -74,12 +74,19 @@ module Procodile
     end
 
     #
+    # Return the defualt log file name
+    #
+    def default_log_file_name
+      @options['log_file_name'] || "#{@name}.log"
+    end
+
+    #
     # Return the log path for this process if no log path is provided and split logs
     # is enabled
     #
     def default_log_path
       if @config.log_root
-        File.join(@config.log_root, "#{@name}.log")
+        File.join(@config.log_root, default_log_file_name)
       else
         nil
       end

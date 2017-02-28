@@ -1,5 +1,9 @@
 # Changelog
 
+## v1.0.10
+
+* Support for setting `log_root` to split process log files into different files rather than being bunched together.
+
 ## v1.0.7
 
 * Support for environments. An environment can be pased to procodile commands and the appropriate configuration read from the `.options` and `.local` files.
