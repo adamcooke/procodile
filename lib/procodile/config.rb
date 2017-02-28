@@ -1,4 +1,5 @@
 require 'yaml'
+require 'fileutils'
 require 'procodile/error'
 require 'procodile/process'
 
