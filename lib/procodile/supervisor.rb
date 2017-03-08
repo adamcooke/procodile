@@ -20,7 +20,7 @@ module Procodile
       @signal_handler.register('TERM') { stop_supervisor }
       @signal_handler.register('INT') { stop(:stop_supervisor => true) }
       @signal_handler.register('USR1') { restart }
-      @signal_handler.register('USR2') { status }
+      @signal_handler.register('USR2') { }
       @signal_handler.register('HUP') { reload_config }
     end
 
