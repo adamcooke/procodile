@@ -15,7 +15,7 @@ module Procodile
       @root = root
       @environment = environment || 'production'
       @procfile_path = procfile
-      unless File.exist?(procfile_path)
+      unless File.file?(procfile_path)
         raise Error, "Procfile not found at #{procfile_path}"
       end
       FileUtils.mkdir_p(pid_root)

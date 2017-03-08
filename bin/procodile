@@ -46,7 +46,7 @@ begin
     end
 
     opts.on("--procfile PATH", "The path to the Procfile (defaults to: Procfile)") do |path|
-      options[:procfile_path] = path
+      options[:procfile] = path
     end
 
     if cli.class.commands[command.to_sym] && option_block = cli.class.commands[command.to_sym][:options]
@@ -58,9 +58,36 @@ rescue OptionParser::InvalidOption, OptionParser::MissingArgument => e
   exit 1
 end
 
+if options[:root] && options[:procfile]
+  # root and profile provided on the command line
+  root = options[:root]
+  procfile = options[:procfile]
+elsif options[:root] && options[:procfile].nil?
+  # root provided on the command line but no procfile
+  root = options[:root]
+  procfile = nil
+elsif options[:root].nil? && options[:procfile]
+  # no root provided but a procfile is provided
+  procfile = File.expand_path(options[:procfile])
+  root = File.dirname(procfile)
+elsif global_config['root'] && global_config['procfile']
+  # the global config specifies a root and a procfile
+  root = global_config['root']
+  procfile = File.expand_path(global_config['procfile'], root)
+elsif global_config['root'] && global_config['procfile'].nil?
+  root = global_config['root']
+  procfile = nil # assume from the root
+elsif global_config['root'].nil? && global_config['procfile']
+  procfile = global_config['procfile']
+  root = File.dirname(procfile)
+else
+  root = FileUtils.pwd
+  procfile = nil
+end
+
 begin
   if command != 'help'
-    cli.config = Procodile::Config.new(options[:root] ? File.expand_path(options[:root]) : global_config['root'] || FileUtils.pwd, options[:environment], options[:procfile_path])
+    cli.config = Procodile::Config.new(root, options[:environment], procfile)
   end
   cli.dispatch(command)
 rescue Procodile::Error => e
