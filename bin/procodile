@@ -1,26 +1,12 @@
 #!/usr/bin/env ruby
 
-require 'yaml'
-global_config_path = ENV['PROCODILE_CONFIG'] || "/etc/procodile"
-if File.exist?(global_config_path)
-  global_config = YAML.load_file(global_config_path)
-else
-  global_config = {}
-end
-
-if global_config['user'] && ENV['USER'] != global_config['user']
-  if global_config['user_reexec']
-    $stderr.puts "\e[31mProcodile must be run as #{global_config['user']}. Re-executing as #{global_config['user']}...\e[0m"
-    exec "sudo -u #{global_config['user']} -- #{$0} #{ARGV.join(' ')}"
-  else
-    $stderr.puts "\e[31mError: Procodile must be run as #{global_config['user']}\e[0m"
-    exit 1
-  end
-end
+trap("INT") { puts ; exit 1 }
 
 $:.unshift(File.expand_path('../../lib', __FILE__))
+
 require 'optparse'
 require 'fileutils'
+require 'yaml'
 require 'procodile'
 require 'procodile/version'
 require 'procodile/error'
@@ -70,7 +56,47 @@ elsif options[:root].nil? && options[:procfile]
   # no root provided but a procfile is provided
   procfile = File.expand_path(options[:procfile])
   root = File.dirname(procfile)
-elsif global_config['root'] && global_config['procfile']
+else
+  # we don't really know what to do in this situation, if there's a global config
+  # file we can use that
+  global_config_path = ENV['PROCODILE_CONFIG'] || "/etc/procodile"
+  if File.exist?(global_config_path)
+    global_config = YAML.load_file(global_config_path)
+    if global_config.is_a?(Array)
+      puts "\e[34mThere are multiple applications configured in #{global_config_path}\e[0m"
+      puts "Choose an application:"
+      global_config.each_with_index do |app, i|
+        col = i % 3
+        print "#{(i+1)}) #{app['name']}"[0,28].ljust(col != 2 ? 30 : 0, ' ')
+        if col == 2 || i == global_config.size - 1
+          puts
+        end
+      end
+      app_id = STDIN.gets.to_i
+      if app = global_config[app_id - 1]
+        global_config = app
+        puts
+      else
+        puts "Invalid app number"
+        exit 1
+      end
+    end
+  else
+    global_config = {}
+  end
+end
+
+if global_config['user'] && ENV['USER'] != global_config['user']
+  if global_config['user_reexec']
+    $stderr.puts "\e[31mProcodile must be run as #{global_config['user']}. Re-executing as #{global_config['user']}...\e[0m"
+    exec "sudo -u #{global_config['user']} -- #{$0} #{ARGV.join(' ')}"
+  else
+    $stderr.puts "\e[31mError: Procodile must be run as #{global_config['user']}\e[0m"
+    exit 1
+  end
+end
+
+if global_config['root'] && global_config['procfile']
   # the global config specifies a root and a procfile
   root = global_config['root']
   procfile = File.expand_path(global_config['procfile'], root)
