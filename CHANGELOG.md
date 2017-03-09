@@ -1,5 +1,13 @@
 # Changelog
 
+## v1.0.11
+
+* Improved support for `rbenv`.
+* Support for defining multiple applications in the global configuration file. If multiple apps are defined globally, you will be prompted to choose an application (or use the current pwd) when you run `procodile` without a `--root` or `--procfile` option.
+* Deprecate the `USR2` signal. It didn't work and didn't do anything useful. A relic from when procodile didn't have a control server.
+* Fixes bug that meant the supervisor didn't stop when there were no processes running and `--stop-when-none` was defined.
+* Improvements to the way a procfile/app root is found when running `procodile`.
+
 ## v1.0.10
 
 * Support for setting `log_root` to split process log files into different files rather than being bunched together.
