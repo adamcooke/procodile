@@ -131,7 +131,7 @@ module Procodile
 
       if @run_options[:stop_when_none]
         # If the processes go away, we can stop the supervisor now
-        if @processes.all? { |_,instances| instances.size == 0 }
+        if @processes.all? { |_,instances| instances.reject(&:failed?).size == 0 }
           Procodile.log nil, "system", "All processes have stopped"
           stop_supervisor
         end
