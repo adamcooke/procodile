@@ -115,7 +115,9 @@ module Procodile
         end
         @tag = @supervisor.tag.dup if @supervisor.tag
         Dir.chdir(@process.config.root)
-        @pid = ::Process.spawn(environment_variables, @process.command, :out => log_destination, :err => log_destination, :pgroup => true)
+        without_rbenv do
+          @pid = ::Process.spawn(environment_variables, @process.command, :out => log_destination, :err => log_destination, :pgroup => true)
+        end
         log_destination.close
         File.open(pid_file_path, 'w') { |f| f.write(@pid.to_s + "\n") }
         @supervisor.add_instance(self, io)
@@ -325,6 +327,25 @@ module Procodile
         rescue
           # Nah.
         end
+      end
+    end
+
+    #
+    # If procodile is executed through rbenv it will pollute our environment which means that
+    # any spawned processes will be invoked with procodile's ruby rather than the ruby that
+    # the application wishes to use
+    #
+    def without_rbenv(&block)
+      previous_environment = ENV.select { |k,v| k =~ /\A(RBENV\_)/ }
+      if previous_environment.size > 0
+        previous_environment.each { |key, value| ENV[key] = nil }
+        previous_environment['PATH'] = ENV['PATH']
+        ENV['PATH'] = ENV['PATH'].split(':').select { |p| !(p =~ /\.rbenv\/versions/) }.join(':')
+      end
+      yield
+    ensure
+      previous_environment.each do |key, value|
+        ENV[key] = value
       end
     end
 
