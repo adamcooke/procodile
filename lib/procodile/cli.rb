@@ -380,15 +380,31 @@ module Procodile
       opts.on("-n LINES", "The number of previous lines to return") do |lines|
         cli.options[:lines] = lines.to_i
       end
+
+      opts.on("-p PROCESS", "--process PROCESS", "Show the log for a given process (rather than procodile)") do |process|
+        cli.options[:process] = process
+      end
+
     end
     command def log
-      if File.exist?(@config.log_path)
-        opts = []
-        opts << "-f" if options[:wait]
-        opts << "-n #{options[:lines]}" if options[:lines]
-        exec("tail #{opts.join(' ')} #{@config.log_path}")
+      opts = []
+      opts << "-f" if options[:wait]
+      opts << "-n #{options[:lines]}" if options[:lines]
+
+      if options[:process]
+        if process = @config.processes[options[:process]]
+          log_path = process.log_path
+        else
+          raise Error, "Invalid process name '#{options[:process]}'"
+        end
       else
-        raise Error, "No log file exists at #{@config.log_path}"
+        log_path = @config.log_path
+      end
+      puts opts
+      if File.exist?(log_path)
+        exec("tail #{opts.join(' ')} #{log_path}")
+      else
+        raise Error, "No file found at #{log_path}"
       end
     end
 
