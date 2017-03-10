@@ -54,7 +54,7 @@ module Procodile
 
       puts "The following commands are supported:"
       puts
-      self.class.commands.each do |method, options|
+      self.class.commands.sort_by { |k,v| k.to_s }.each do |method, options|
         puts "  \e[34m#{method.to_s.ljust(18, ' ')}\e[0m #{options[:description]}"
       end
       puts
