@@ -368,6 +368,31 @@ module Procodile
       end
     end
 
+    #
+    # Open up the procodile log if it exists
+    #
+    desc "Open a console within the environment"
+    options do |opts, cli|
+      opts.on("-f", "Wait for additional data and display it straight away") do
+        cli.options[:wait] = true
+      end
+
+      opts.on("-n LINES", "The number of previous lines to return") do |lines|
+        cli.options[:lines] = lines.to_i
+      end
+    end
+    command def log
+      if File.exist?(@config.log_path)
+        opts = []
+        opts << "-f" if options[:wait]
+        opts << "-n #{options[:lines]}" if options[:lines]
+        exec("tail #{opts.join(' ')} #{@config.log_path}")
+      else
+        raise Error, "No log file exists at #{@config.log_path}"
+      end
+    end
+
+
     private
 
     def supervisor_running?
