@@ -132,6 +132,12 @@ module Procodile
       proxy? ? @options['proxy_address'] || '127.0.0.1' : nil
     end
 
+    #
+    # Return the network protocol for this process
+    #
+    def network_protocol
+      @options['network_protocol'] || 'tcp'
+    end
 
     #
     # Generate an array of new instances for this process (based on its quantity)

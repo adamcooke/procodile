@@ -104,6 +104,10 @@ module Procodile
         cli.options[:proxy] = true
       end
 
+      opts.on("--allocate-ports", "Allow free port numbers to all processes") do
+        cli.options[:allocate_ports] = true
+      end
+
       opts.on("-d", "--dev", "Run in development mode") do
         cli.options[:development] = true
         cli.options[:respawn] = false
@@ -454,6 +458,7 @@ module Procodile
       run_options[:stop_when_none] = options[:stop_when_none]
       run_options[:proxy] = options[:proxy]
       run_options[:force_single_log] = options[:foreground]
+      run_options[:allocate_ports] = options[:allocate_ports]
 
       if options[:clean]
         FileUtils.rm_rf(Dir[File.join(config.pid_root, '*')])

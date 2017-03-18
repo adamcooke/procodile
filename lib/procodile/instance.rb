@@ -101,7 +101,7 @@ module Procodile
         nil
       else
 
-        if @process.proxy? && @supervisor.tcp_proxy
+        if @supervisor.run_options[:allocate_ports] || (@process.proxy? && @supervisor.tcp_proxy)
           allocate_port
         end
 
@@ -317,17 +317,39 @@ module Procodile
     # Find a port number for this instance to listen on. We just check that nothing is already listening on it.
     # The process is expected to take it straight away if it wants it.
     #
-    def allocate_port
+    def allocate_port(max_attempts = 10)
+      attempts = 0
       until @port
+        attempts += 1
         possible_port = rand(10000) + 20000
-        begin
-          server = TCPServer.new('127.0.0.1', possible_port)
-          server.close
+        if self.port_available?(possible_port)
+          Procodile.log(@process.log_color, description, "Allocated port as #{possible_port}")
           return @port = possible_port
-        rescue
-          # Nah.
+        elsif attempts >= max_attempts
+          raise Procodile::Error, "Couldn't allocate port for #{instance.name}"
         end
       end
+    end
+
+    #
+    # Is the given port available?
+    #
+    def port_available?(port)
+      case @process.network_protocol
+      when 'tcp'
+        server = TCPServer.new('127.0.0.1', port)
+        server.close
+        true
+      when 'udp'
+        server = UDPSocket.new
+        server.bind('127.0.0.1', port)
+        server.close
+        true
+      else
+        raise Procodile::Error, "Invalid network_protocol '#{@process.network_protocol}'"
+      end
+    rescue Errno::EADDRINUSE => e
+      false
     end
 
     #

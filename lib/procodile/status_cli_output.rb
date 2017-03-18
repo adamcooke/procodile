@@ -59,10 +59,10 @@ module Procodile
             print "|| => ".color(process['log_color']) + instance['description'].to_s.ljust(17, ' ').color(process['log_color'])
             print instance['status'].ljust(10, ' ')
             print "   " + formatted_timestamp(instance['started_at']).ljust(10, ' ')
-            print "   " + instance['pid'].to_s.ljust(6, ' ')
-            print "   " + instance['respawns'].to_s.ljust(4, ' ')
-            print "   " + (instance['port'] || "-").to_s.ljust(6, ' ')
-            print "   " + (instance['tag'] || "-").to_s
+            print "   pid:" + instance['pid'].to_s.ljust(6, ' ')
+            print "   respawns:" + instance['respawns'].to_s.ljust(4, ' ')
+            print "   port:" + (instance['port'] || "-").to_s.ljust(6, ' ')
+            print "   tag:" + (instance['tag'] || "-").to_s
             puts
           end
         end
