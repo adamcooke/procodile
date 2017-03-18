@@ -42,6 +42,15 @@ module Procodile
       watch_for_output
       @started_at = Time.now
       after_start.call(self) if block_given?
+      supervise!
+    rescue => e
+      Procodile.log nil, "system", "Error: #{e.class} (#{e.message})"
+      e.backtrace.each { |bt| Procodile.log nil, "system", "=> #{bt})" }
+      stop(:stop_supervisor => true)
+      supervise!
+    end
+
+    def supervise!
       loop { supervise; sleep 3 }
     end
 
