@@ -1,0 +1,16 @@
+app_name: specapp
+pid_root: tmp/pids
+log_path:
+  production: procodile.production.log
+  development: procodile.development.log
+console_command: irb -Ilib
+env:
+  RAILS_ENV: production
+  FRUIT: apple
+  VEGETABLE:
+    production: potato
+    development: mushroom
+processes:
+  proc1:
+    quantity: 2
+    restart_mode: term-start

@@ -11,7 +11,7 @@ module Procodile
     attr_reader :root
     attr_reader :environment
 
-    def initialize(root, environment, procfile = nil)
+    def initialize(root, environment = nil, procfile = nil)
       @root = root
       @environment = environment || 'production'
       @procfile_path = procfile
@@ -72,11 +72,11 @@ module Procodile
     end
 
     def process_list
-      @process_list ||= YAML.load_file(procfile_path) || {}
+      @process_list ||= load_process_list_from_file
     end
 
     def options
-      @options ||= File.exist?(options_path) ? YAML.load_file(options_path) : {}
+      @options ||= load_options_from_file
     end
 
     def process_options
@@ -84,7 +84,7 @@ module Procodile
     end
 
     def local_options
-      @local_options ||= File.exist?(local_options_path) ? YAML.load_file(local_options_path) : {}
+      @local_options ||= load_local_options_from_file
     end
 
     def local_process_options
@@ -130,8 +130,6 @@ module Procodile
       File.join(pid_root, 'procodile.sock')
     end
 
-    private
-
     def procfile_path
       @procfile_path || File.join(@root, 'Procfile')
     end
@@ -143,6 +141,8 @@ module Procodile
     def local_options_path
       procfile_path + ".local"
     end
+
+    private
 
     def create_process(name, command, log_color)
       process = Process.new(self, name, command, options_for_process(name))
@@ -168,6 +168,18 @@ module Procodile
           h[key] = value
         end
       end
+    end
+
+    def load_process_list_from_file
+      YAML.load_file(procfile_path)
+    end
+
+    def load_options_from_file
+      File.exist?(options_path) ? YAML.load_file(options_path) : {}
+    end
+
+    def load_local_options_from_file
+      File.exist?(local_options_path) ? YAML.load_file(local_options_path) : {}
     end
 
   end
