@@ -100,8 +100,7 @@ module Procodile
         Procodile.log(@process.log_color, description, "Already running with PID #{@pid}")
         nil
       else
-
-        if @supervisor.run_options[:allocate_ports] || (@process.proxy? && @supervisor.tcp_proxy)
+        if @process.allocate_ports? && (@supervisor.run_options[:allocate_ports] || (@process.proxy? && @supervisor.tcp_proxy))
           allocate_port
         end
 

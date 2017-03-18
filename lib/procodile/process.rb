@@ -133,10 +133,17 @@ module Procodile
     end
 
     #
+    # Should ports be allocate to this process's instances
+    #
+    def allocate_ports?
+      network_protocol != false
+    end
+
+    #
     # Return the network protocol for this process
     #
     def network_protocol
-      @options['network_protocol'] || 'tcp'
+      @options['network_protocol'] || false
     end
 
     #
