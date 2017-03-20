@@ -171,5 +171,16 @@ module Procodile
       }
     end
 
+    #
+    # Is the given quantity suitable for this process?
+    #
+    def correct_quantity?(quantity)
+      if self.restart_mode == 'start-term'
+        quantity >= self.quantity
+      else
+        self.quantity == quantity
+      end
+    end
+
   end
 end
