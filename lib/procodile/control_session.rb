@@ -25,6 +25,13 @@ module Procodile
     end
 
     def start_processes(options)
+      if options['port_allocations']
+        if @supervisor.run_options[:port_allocations]
+          @supervisor.run_options[:port_allocations].merge!(options['port_allocations'])
+        else
+          @supervisor.run_options[:port_allocations] = options['port_allocations']
+        end
+      end
       instances = @supervisor.start_processes(options['processes'], :tag => options['tag'])
       "200 " + instances.map(&:to_hash).to_json
     end

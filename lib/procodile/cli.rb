@@ -104,8 +104,11 @@ module Procodile
         cli.options[:proxy] = true
       end
 
-      opts.on("--allocate-ports", "Allow free port numbers to all processes") do
-        cli.options[:allocate_ports] = true
+      opts.on("--ports PROCESSES", "Choose ports to allocate to processes") do |processes|
+        cli.options[:port_allocations] = processes.split(/\,/).each_with_object({}) do |line, hash|
+          process, port = line.split(':')
+          hash[process] = port.to_i
+        end
       end
 
       opts.on("-d", "--dev", "Run in development mode") do
@@ -134,7 +137,7 @@ module Procodile
           raise Error, "Cannot enable the proxy when the supervisor is running"
         end
 
-        instances = ControlClient.run(@config.sock_path, 'start_processes', :processes => process_names_from_cli_option, :tag => @options[:tag])
+        instances = ControlClient.run(@config.sock_path, 'start_processes', :processes => process_names_from_cli_option, :tag => @options[:tag], :port_allocations => @options[:port_allocations])
         if instances.empty?
           puts "No processes to start."
         else
@@ -458,7 +461,7 @@ module Procodile
       run_options[:stop_when_none] = options[:stop_when_none]
       run_options[:proxy] = options[:proxy]
       run_options[:force_single_log] = options[:foreground]
-      run_options[:allocate_ports] = options[:allocate_ports]
+      run_options[:port_allocations] = options[:port_allocations]
 
       if options[:clean]
         FileUtils.rm_rf(Dir[File.join(config.pid_root, '*')])

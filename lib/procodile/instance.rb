@@ -100,7 +100,19 @@ module Procodile
         Procodile.log(@process.log_color, description, "Already running with PID #{@pid}")
         nil
       else
-        if @process.allocate_ports? && (@supervisor.run_options[:allocate_ports] || (@process.proxy? && @supervisor.tcp_proxy))
+        if @supervisor.run_options[:port_allocations] && chosen_port = @supervisor.run_options[:port_allocations][@process.name]
+          if chosen_port == 0
+            allocate_port
+          else
+            @port = chosen_port
+            Procodile.log(@process.log_color, description, "Assigned #{chosen_port} to process")
+          end
+        elsif @process.proxy? && @supervisor.tcp_proxy
+          # Allocate a port randomly if a proxy is needed
+          allocate_port
+        end
+
+        if (@supervisor.run_options[:allocate_ports] && @supervisor.run_options[:allocate_ports].include?(@process.name)) || (@process.proxy? && @supervisor.tcp_proxy)
           allocate_port
         end
 
