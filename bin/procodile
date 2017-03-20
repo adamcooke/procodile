@@ -44,6 +44,8 @@ rescue OptionParser::InvalidOption, OptionParser::MissingArgument => e
   exit 1
 end
 
+root = nil
+procfile = nil
 global_config = {}
 if options[:root] && options[:procfile]
   # root and profile provided on the command line
@@ -117,8 +119,8 @@ elsif global_config['root'].nil? && global_config['procfile']
   procfile = global_config['procfile']
   root = File.dirname(procfile)
 else
-  root = FileUtils.pwd
-  procfile = nil
+  root ||= FileUtils.pwd
+  procfile ||= nil
 end
 
 begin
