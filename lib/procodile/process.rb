@@ -142,7 +142,7 @@ module Procodile
     # Return the network protocol for this process
     #
     def network_protocol
-      @options['network_protocol'] || false
+      @options['network_protocol'] || 'tcp'
     end
 
     #
