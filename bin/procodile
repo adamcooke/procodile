@@ -2,6 +2,8 @@
 
 trap("INT") { puts ; exit 1 }
 
+ORIGINAL_ARGV = ARGV.join(' ')
+
 $:.unshift(File.expand_path('../../lib', __FILE__))
 
 require 'optparse'
@@ -66,29 +68,41 @@ else
   if File.exist?(global_config_path)
     global_config = YAML.load_file(global_config_path)
     if global_config.is_a?(Array)
-      puts "There are multiple applications configured in #{global_config_path}"
-      if File.file?("Procfile")
-        puts "\e[45;37mChoose an appplication or press ENTER to use the current directory:\e[0m"
+      if ENV['PROCODILE_APP_ID']
+        app_id = ENV['PROCODILE_APP_ID'].to_i
+        preselect = true
       else
-        puts "\e[45;37mChoose an application:\e[0m"
-      end
-      global_config.each_with_index do |app, i|
-        col = i % 3
-        print "#{(i+1)}) #{app['name']}"[0,28].ljust(col != 2 ? 30 : 0, ' ')
-        if col == 2 || i == global_config.size - 1
-          puts
+        puts "There are multiple applications configured in #{global_config_path}"
+        if File.file?("Procfile")
+          puts "\e[45;37mChoose an appplication or press ENTER to use the current directory:\e[0m"
+        else
+          puts "\e[45;37mChoose an application:\e[0m"
         end
+        global_config.each_with_index do |app, i|
+          col = i % 3
+          print "#{(i+1)}) #{app['name']}"[0,28].ljust(col != 2 ? 30 : 0, ' ')
+          if col == 2 || i == global_config.size - 1
+            puts
+          end
+        end
+        app_id = STDIN.gets.to_i
+        ENV['PROCODILE_APP_ID'] = app_id.to_s
+        preselect = false
       end
-      app_id = STDIN.gets.to_i
+
       if app_id == 0
         if File.file?('Procfile')
-          puts "Skipping application selection... using current directory"
+          unless preselect
+            puts "Skipping application selection... using current directory"
+          end
           global_config = {}
         else
           exit 1
         end
       elsif app = global_config[app_id - 1]
-        puts "\e[35mYou selected #{app['name']}\e[0m"
+        unless preselect
+          puts "\e[35mYou selected #{app['name']}\e[0m"
+        end
         global_config = app
       else
         puts "Invalid app number"
@@ -101,7 +115,7 @@ end
 if global_config['user'] && ENV['USER'] != global_config['user']
   if global_config['user_reexec']
     $stderr.puts "\e[31mProcodile must be run as #{global_config['user']}. Re-executing as #{global_config['user']}...\e[0m"
-    exec "sudo -u #{global_config['user']} -- #{$0} #{ARGV.join(' ')}"
+    exec("sudo -E -u #{global_config['user']} -- #{$0} #{ORIGINAL_ARGV}")
   else
     $stderr.puts "\e[31mError: Procodile must be run as #{global_config['user']}\e[0m"
     exit 1
