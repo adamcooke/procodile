@@ -184,7 +184,7 @@ module Procodile
           messages << {:type => :incorrect_quantity, :process => process.name, :current => process_instances.size, :desired => process.quantity}
         end
         for instance in process_instances
-          if instance.status != 'Running'
+          if instance.should_be_running? && instance.status != 'Running'
             messages << {:type => :not_running, :instance => instance.description, :status => instance.status}
           end
         end

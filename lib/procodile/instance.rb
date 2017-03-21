@@ -42,6 +42,17 @@ module Procodile
     end
 
     #
+    # Should this process be running?
+    #
+    def should_be_running?
+      if stopped? || stopping?
+        false
+      else
+        true
+      end
+    end
+
+    #
     # Return an array of environment variables that should be set
     #
     def environment_variables
