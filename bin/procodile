@@ -46,100 +46,58 @@ rescue OptionParser::InvalidOption, OptionParser::MissingArgument => e
   exit 1
 end
 
-root = nil
-procfile = nil
-global_config = {}
-if options[:root] && options[:procfile]
-  # root and profile provided on the command line
-  root = options[:root]
-  procfile = options[:procfile]
-elsif options[:root] && options[:procfile].nil?
-  # root provided on the command line but no procfile
-  root = options[:root]
-  procfile = nil
-elsif options[:root].nil? && options[:procfile]
-  # no root provided but a procfile is provided
-  procfile = File.expand_path(options[:procfile])
-  root = File.dirname(procfile)
-else
-  # we don't really know what to do in this situation, if there's a global config
-  # file we can use that
-  global_config_path = ENV['PROCODILE_CONFIG'] || "/etc/procodile"
-  if File.exist?(global_config_path)
-    global_config = YAML.load_file(global_config_path)
-    if global_config.is_a?(Array)
-      if ENV['PROCODILE_APP_ID']
-        app_id = ENV['PROCODILE_APP_ID'].to_i
-        preselect = true
-      else
-        puts "There are multiple applications configured in #{global_config_path}"
-        if File.file?("Procfile")
-          puts "\e[45;37mChoose an appplication or press ENTER to use the current directory:\e[0m"
-        else
-          puts "\e[45;37mChoose an application:\e[0m"
-        end
-        global_config.each_with_index do |app, i|
-          col = i % 3
-          print "#{(i+1)}) #{app['name']}"[0,28].ljust(col != 2 ? 30 : 0, ' ')
-          if col == 2 || i == global_config.size - 1
-            puts
-          end
-        end
-        app_id = STDIN.gets.to_i
-        ENV['PROCODILE_APP_ID'] = app_id.to_s
-        preselect = false
-      end
 
-      if app_id == 0
-        if File.file?('Procfile')
-          unless preselect
-            puts "Skipping application selection... using current directory"
-          end
-          global_config = {}
-        else
-          exit 1
-        end
-      elsif app = global_config[app_id - 1]
-        unless preselect
-          puts "\e[35mYou selected #{app['name']}\e[0m"
-        end
-        global_config = app
-      else
-        puts "Invalid app number"
-        exit 1
+# Get the global configuration file data
+global_config_path = ENV['PROCODILE_CONFIG'] || "/etc/procodile"
+if File.file?(global_config_path)
+  global_config = YAML.load_file(global_config_path)
+else
+  global_config = {}
+end
+
+# Create a determination to work out where we want to load our app from
+require 'procodile/app_determination'
+ap = Procodile::AppDetermination.new(FileUtils.pwd, options[:root], options[:procfile], options[:environment], global_config)
+if ap.ambiguous?
+  if ENV['PROCODILE_APP_ID']
+    ap.set_app(ENV['PROCODILE_APP_ID'].to_i)
+  elsif ap.app_options.empty?
+    $stderr.puts "Error: Could not find procodile in #{FileUtils.pwd}/Procfile".color(31)
+    exit 1
+  else
+    puts "There are multiple applications configured in #{global_config_path}"
+    puts "\e[45;37mChoose an application:\e[0m"
+    ap.app_options.each do |i, app|
+      col = i % 3
+      print "#{(i+1)}) #{app}"[0,28].ljust(col != 2 ? 30 : 0, ' ')
+      if col == 2 || i == ap.app_options.size - 1
+        puts
       end
+    end
+
+    app_id = STDIN.gets.strip.to_i - 1
+    if ap.app_options[app_id]
+      ap.set_app(app_id)
+    else
+      puts "Invalid app number: #{app_id + 1}"
+      exit 1
     end
   end
 end
 
-if global_config['user'] && ENV['USER'] != global_config['user']
+if ap.user && ENV['USER'] != ap.user
   if global_config['user_reexec']
-    $stderr.puts "\e[31mProcodile must be run as #{global_config['user']}. Re-executing as #{global_config['user']}...\e[0m"
-    exec("sudo -E -u #{global_config['user']} -- #{$0} #{ORIGINAL_ARGV}")
+    $stderr.puts "\e[31mProcodile must be run as #{ap.user}. Re-executing as #{ap.user}...\e[0m"
+    exec("sudo -E -u #{ap.user} -- #{$0} #{ORIGINAL_ARGV}")
   else
-    $stderr.puts "\e[31mError: Procodile must be run as #{global_config['user']}\e[0m"
+    $stderr.puts "\e[31mError: Procodile must be run as #{ap.user}\e[0m"
     exit 1
   end
 end
 
-if global_config['root'] && global_config['procfile']
-  # the global config specifies a root and a procfile
-  root = global_config['root']
-  procfile = File.expand_path(global_config['procfile'], root)
-elsif global_config['root'] && global_config['procfile'].nil?
-  root = global_config['root']
-  procfile = nil # assume from the root
-elsif global_config['root'].nil? && global_config['procfile']
-  procfile = global_config['procfile']
-  root = File.dirname(procfile)
-else
-  root ||= FileUtils.pwd
-  procfile ||= nil
-end
-
 begin
   if command != 'help'
-    cli.config = Procodile::Config.new(root, options[:environment], procfile)
+    cli.config = Procodile::Config.new(ap.root, ap.environment, ap.procfile)
   end
   cli.dispatch(command)
 rescue Procodile::Error => e
