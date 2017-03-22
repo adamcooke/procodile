@@ -62,7 +62,7 @@ if ap.ambiguous?
   if ENV['PROCODILE_APP_ID']
     ap.set_app(ENV['PROCODILE_APP_ID'].to_i)
   elsif ap.app_options.empty?
-    $stderr.puts "Error: Could not find procodile in #{FileUtils.pwd}/Procfile".color(31)
+    $stderr.puts "Error: Could not find Procfile in #{FileUtils.pwd}/Procfile".color(31)
     exit 1
   else
     puts "There are multiple applications configured in #{global_config_path}"
