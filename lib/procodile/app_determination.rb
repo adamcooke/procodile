@@ -91,17 +91,17 @@ module Procodile
     def find_root_and_procfile(pwd, root, procfile)
       if root && procfile
         # The user has provided both the root and procfile, we can use these
-        @root = File.expand_path(root)
-        @procfile = File.expand_path(procfile, @root)
+        @root = expand_path(root)
+        @procfile = expand_path(procfile, @root)
       elsif root && procfile.nil?
         # The user has given us a root, we can assume they want to use the procfile
         # from the root
-        @root = File.expand_path(root)
+        @root = expand_path(root)
         @procfile = File.join(@root, 'Procfile')
       elsif root.nil? && procfile
         # The user has given us a procfile but no root. We will assume the procfile
         # is in the root of the directory
-        @procfile = File.expand_path(procfile)
+        @procfile = expand_path(procfile)
         @root = File.dirname(@procfile)
       else
         # The user has given us nothing. We will check to see if there's a Procfile
@@ -130,10 +130,10 @@ module Procodile
     end
 
     def global_options_for_path(root)
-      root = File.expand_path(root)
-      if @global_options.is_a?(Hash) && @global_options['root'] && File.expand_path(@global_options['root']) == root
+      root = expand_path(root)
+      if @global_options.is_a?(Hash) && @global_options['root'] && expand_path(@global_options['root']) == root
         @global_options
-      elsif @global_options.is_a?(Array) && option = @global_options.select { |o| o['root'] && File.expand_path(o['root']) == root }.first
+      elsif @global_options.is_a?(Array) && option = @global_options.select { |o| o['root'] && expand_path(o['root']) == root }.first
         option
       else
         nil
@@ -144,6 +144,19 @@ module Procodile
       @user = options['user'] if options['user']
       @reexec = options['user_reexec'] if options['user_reexec']
       @environment = options['environment'] if options['environment']
+    end
+
+    def expand_path(path, root = nil)
+      # Remove trailing slashes for normalization
+      path = path.gsub(/\/\z/, '')
+      if path =~ /\//
+        # If the path starts with a /, it's absolute. Do nothing.
+        path
+      else
+        # Otherwise, if there's a root provided, it should be from the root
+        # of that otherwise from the root of the current directory.
+        root ? File.join(root, path) : File.join(@pwd, path)
+      end
     end
 
   end
