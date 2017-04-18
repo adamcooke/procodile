@@ -85,20 +85,15 @@ if ap.ambiguous?
   end
 end
 
-if ap.user && ENV['USER'] != ap.user
-  if global_config['user_reexec']
-    $stderr.puts "\e[31mProcodile must be run as #{ap.user}. Re-executing as #{ap.user}...\e[0m"
-    exec("sudo -E -u #{ap.user} -- #{$0} #{ORIGINAL_ARGV}")
-  else
-    $stderr.puts "\e[31mError: Procodile must be run as #{ap.user}\e[0m"
-    exit 1
-  end
-end
-
 begin
   if command != 'help'
     cli.config = Procodile::Config.new(ap.root, ap.environment, ap.procfile)
+    if cli.config.user && ENV['USER'] != cli.config.user
+      $stderr.puts "\e[31mProcodile must be run as #{cli.config.user}. Re-executing as #{cli.config.user}...\e[0m"
+      exec("sudo -E -u #{cli.config.user} -- #{$0} #{ORIGINAL_ARGV}")
+    end
   end
+
   cli.dispatch(command)
 rescue Procodile::Error => e
   $stderr.puts "Error: #{e.message}".color(31)

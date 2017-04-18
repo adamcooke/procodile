@@ -63,6 +63,10 @@ module Procodile
       fetch(local_options['root']) || fetch(options['root']) || @root
     end
 
+    def user
+      fetch(local_options['user']) || fetch(options['user'])
+    end
+
     def app_name
       @app_name ||= fetch(local_options['app_name']) || fetch(options['app_name']) || 'Procodile'
     end
