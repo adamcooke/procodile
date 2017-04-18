@@ -59,6 +59,10 @@ module Procodile
       end
     end
 
+    def root
+      fetch(local_options['root']) || fetch(options['root']) || @root
+    end
+
     def app_name
       @app_name ||= fetch(local_options['app_name']) || fetch(options['app_name']) || 'Procodile'
     end
@@ -100,7 +104,7 @@ module Procodile
     end
 
     def pid_root
-      @pid_root ||= File.expand_path(fetch(local_options['pid_root']) || fetch(options['pid_root']) || 'pids', @root)
+      @pid_root ||= File.expand_path(fetch(local_options['pid_root']) || fetch(options['pid_root']) || 'pids', self.root)
     end
 
     def supervisor_pid_path
@@ -110,17 +114,17 @@ module Procodile
     def log_path
       log_path = fetch(local_options['log_path']) || fetch(options['log_path'])
       if log_path
-        File.expand_path(log_path, @root)
+        File.expand_path(log_path, self.root)
       elsif log_path.nil? && self.log_root
         File.join(self.log_root, 'procodile.log')
       else
-        File.expand_path("procodile.log", @root)
+        File.expand_path("procodile.log", self.root)
       end
     end
 
     def log_root
       if log_root = (fetch(local_options['log_root']) || fetch(options['log_root']))
-        File.expand_path(log_root, @root)
+        File.expand_path(log_root, self.root)
       else
         nil
       end
@@ -131,7 +135,7 @@ module Procodile
     end
 
     def procfile_path
-      @procfile_path || File.join(@root, 'Procfile')
+      @procfile_path || File.join(self.root, 'Procfile')
     end
 
     def options_path
