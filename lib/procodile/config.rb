@@ -8,12 +8,8 @@ module Procodile
 
     COLORS = [35, 31, 36, 32, 33, 34]
 
-    attr_reader :root
-    attr_reader :environment
-
-    def initialize(root, environment = nil, procfile = nil)
+    def initialize(root, procfile = nil)
       @root = root
-      @environment = environment || 'production'
       @procfile_path = procfile
       unless File.file?(procfile_path)
         raise Error, "Procfile not found at #{procfile_path}"
@@ -60,19 +56,19 @@ module Procodile
     end
 
     def root
-      fetch(local_options['root']) || fetch(options['root']) || @root
+      local_options['root'] || options['root'] || @root
     end
 
     def user
-      fetch(local_options['user']) || fetch(options['user'])
+      local_options['user'] || options['user']
     end
 
     def app_name
-      @app_name ||= fetch(local_options['app_name']) || fetch(options['app_name']) || 'Procodile'
+      @app_name ||= local_options['app_name'] || options['app_name'] || 'Procodile'
     end
 
     def console_command
-      fetch(local_options['console_command']) || fetch(options['console_command'])
+      local_options['console_command'] || options['console_command']
     end
 
     def processes
@@ -104,11 +100,11 @@ module Procodile
     end
 
     def environment_variables
-      fetch_hash_values(options['env'] || {}).merge(fetch_hash_values(local_options['env'] || {}))
+      (options['env'] || {}).merge(local_options['env'] || {})
     end
 
     def pid_root
-      @pid_root ||= File.expand_path(fetch(local_options['pid_root']) || fetch(options['pid_root']) || 'pids', self.root)
+      @pid_root ||= File.expand_path(local_options['pid_root'] || options['pid_root'] || 'pids', self.root)
     end
 
     def supervisor_pid_path
@@ -116,7 +112,7 @@ module Procodile
     end
 
     def log_path
-      log_path = fetch(local_options['log_path']) || fetch(options['log_path'])
+      log_path = local_options['log_path'] || options['log_path']
       if log_path
         File.expand_path(log_path, self.root)
       elsif log_path.nil? && self.log_root
@@ -127,7 +123,7 @@ module Procodile
     end
 
     def log_root
-      if log_root = (fetch(local_options['log_root']) || fetch(options['log_root']))
+      if log_root = (local_options['log_root'] || options['log_root'])
         File.expand_path(log_root, self.root)
       else
         nil
@@ -139,7 +135,7 @@ module Procodile
     end
 
     def procfile_path
-      @procfile_path || File.join(self.root, 'Procfile')
+      @procfile_path || File.join(@root, 'Procfile')
     end
 
     def options_path
@@ -156,26 +152,6 @@ module Procodile
       process = Process.new(self, name, command, options_for_process(name))
       process.log_color = log_color
       process
-    end
-
-    def fetch(value, default = nil)
-      if value.is_a?(Hash)
-        if value.has_key?(@environment)
-          value[@environment]
-        else
-          default
-        end
-      else
-        value.nil? ? default : value
-      end
-    end
-
-    def fetch_hash_values(hash)
-      hash.each_with_object({}) do |(key, value), h|
-        if value = fetch(value)
-          h[key] = value
-        end
-      end
     end
 
     def load_process_list_from_file

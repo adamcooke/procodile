@@ -72,7 +72,6 @@ module Procodile
         :version => Procodile::VERSION,
         :messages => @supervisor.messages,
         :root => @supervisor.config.root,
-        :environment => @supervisor.config.environment,
         :app_name => @supervisor.config.app_name,
         :supervisor => @supervisor.to_hash,
         :instances => instances,

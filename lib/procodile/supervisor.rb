@@ -30,7 +30,7 @@ module Procodile
 
     def start(&after_start)
       Procodile.log nil, "system", "Procodile supervisor started with PID #{::Process.pid}"
-      Procodile.log nil, "system", "Environment is #{@config.environment}"
+      Procodile.log nil, "system", "Application root is #{@config.root}"
       if @run_options[:respawn] == false
         Procodile.log nil, "system", "Automatic respawning is disabled"
       end

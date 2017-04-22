@@ -29,10 +29,6 @@ begin
       options[:root] = root
     end
 
-    opts.on("-e", "--environment NAME", "The config environment to use") do |name|
-      options[:environment] = name
-    end
-
     opts.on("--procfile PATH", "The path to the Procfile (defaults to: Procfile)") do |path|
       options[:procfile] = path
     end
@@ -57,7 +53,7 @@ end
 
 # Create a determination to work out where we want to load our app from
 require 'procodile/app_determination'
-ap = Procodile::AppDetermination.new(FileUtils.pwd, options[:root], options[:procfile], options[:environment], global_config)
+ap = Procodile::AppDetermination.new(FileUtils.pwd, options[:root], options[:procfile], global_config)
 if ap.ambiguous?
   if ENV['PROCODILE_APP_ID']
     ap.set_app(ENV['PROCODILE_APP_ID'].to_i)
@@ -87,7 +83,7 @@ end
 
 begin
   if command != 'help'
-    cli.config = Procodile::Config.new(ap.root, ap.environment, ap.procfile)
+    cli.config = Procodile::Config.new(ap.root, ap.procfile)
     if cli.config.user && ENV['USER'] != cli.config.user
       $stderr.puts "\e[31mProcodile must be run as #{cli.config.user}. Re-executing as #{cli.config.user}...\e[0m"
       exec("sudo -H -u #{cli.config.user} -- #{$0} #{ORIGINAL_ARGV}")

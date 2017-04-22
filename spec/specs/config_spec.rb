@@ -6,10 +6,6 @@ describe Procodile::Config do
   context "an application with a Procfile" do
     subject(:config) { Procodile::Config.new(File.join(APPS_ROOT, 'basic'))}
 
-    it "should have a default environment" do
-      expect(config.environment).to eq 'production'
-    end
-
     it "should have a default procfile path" do
       expect(config.procfile_path).to eq File.join(APPS_ROOT, 'basic', 'Procfile')
     end
@@ -118,7 +114,7 @@ describe Procodile::Config do
     end
 
     it "should a custom log path" do
-      expect(config.log_path).to eq File.join(APPS_ROOT, 'full', 'procodile.production.log')
+      expect(config.log_path).to eq File.join(APPS_ROOT, 'full', 'log/procodile.log')
     end
 
     it "should return a console command" do
@@ -131,19 +127,6 @@ describe Procodile::Config do
       expect(config.options_for_process('proc1')['restart_mode']).to eq 'term-start'
       expect(config.options_for_process('proc2')).to be_a Hash
       expect(config.options_for_process('proc2')).to be_empty
-    end
-
-    context "with a different environment" do
-      subject(:config) { Procodile::Config.new(File.join(APPS_ROOT, 'full'), 'development')}
-
-      it "should return the correct environment variables" do
-        expect(config.environment_variables['FRUIT']).to eq 'apple'
-        expect(config.environment_variables['VEGETABLE']).to eq 'mushroom'
-      end
-
-      it "should return the correct log path" do
-        expect(config.log_path).to eq File.join(APPS_ROOT, 'full', 'procodile.development.log')
-      end
     end
   end
 
