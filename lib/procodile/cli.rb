@@ -432,12 +432,10 @@ module Procodile
 
     def supervisor_running?
       if pid = current_pid
-        ::Process.getpgid(pid) ? true : false
+        self.class.pid_active?(pid)
       else
         false
       end
-    rescue Errno::ESRCH
-      false
     end
 
     def current_pid
@@ -447,6 +445,12 @@ module Procodile
       else
         nil
       end
+    end
+
+    def self.pid_active?(pid)
+      ::Process.getpgid(pid) ? true : false
+    rescue Errno::ESRCH
+      false
     end
 
     def process_names_from_cli_option
@@ -475,6 +479,8 @@ module Procodile
       run_options[:force_single_log] = options[:foreground]
       run_options[:port_allocations] = options[:port_allocations]
 
+      tidy_pids(config)
+
       if options[:clean]
         FileUtils.rm_rf(Dir[File.join(config.pid_root, '*')])
         puts "Emptied PID directory"
@@ -500,6 +506,22 @@ module Procodile
         ::Process.detach(pid)
         File.open(config.supervisor_pid_path, 'w') { |f| f.write(pid) }
         puts "Started Procodile supervisor with PID #{pid}"
+      end
+    end
+
+    def self.tidy_pids(config)
+      FileUtils.rm_f(config.supervisor_pid_path)
+      FileUtils.rm_f(config.sock_path)
+      pid_files = Dir[File.join(config.pid_root, '*.pid')]
+      pid_files.each do |pid_path|
+        file_name = pid_path.split('/').last
+        pid = File.read(pid_path).to_i
+        if self.pid_active?(pid)
+          puts "Could not remove #{file_name} because process (#{pid}) was active"
+        else
+          FileUtils.rm_f(pid_path)
+          puts "Removed #{file_name} because process was not active"
+        end
       end
     end
 
