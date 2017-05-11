@@ -71,11 +71,11 @@ module Procodile
 
     def find_root_and_procfile(pwd, root, procfile)
       if root && procfile
-        # The user has provided both the root and procfile, we can use these
+        # The user has provided both the root and procfile, we can use these
         @root = expand_path(root)
         @procfile = expand_path(procfile, @root)
       elsif root && procfile.nil?
-        # The user has given us a root, we can assume they want to use the procfile
+        # The user has given us a root, we can assume they want to use the procfile
         # from the root
         @root = expand_path(root)
         @procfile = File.join(@root, 'Procfile')
@@ -117,7 +117,7 @@ module Procodile
         path
       else
         # Otherwise, if there's a root provided, it should be from the root
-        # of that otherwise from the root of the current directory.
+        # of that otherwise from the root of the current directory.
         root ? File.join(root, path) : File.join(@pwd, path)
       end
     end

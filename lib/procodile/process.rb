@@ -81,7 +81,7 @@ module Procodile
 
     #
     # Return the log path for this process if no log path is provided and split logs
-    # is enabled
+    # is enabled
     #
     def default_log_path
       if @config.log_root
@@ -92,7 +92,7 @@ module Procodile
     end
 
     #
-    # Return the signal to send to terminate the process
+    # Return the signal to send to terminate the process
     #
     def term_signal
       @options['term_signal'] || 'TERM'
@@ -102,7 +102,7 @@ module Procodile
     # Defines how this process should be restarted
     #
     # start-term = start new instances and send term to children
-    # usr1 = just send a usr1 signal to the current instance
+    # usr1 = just send a usr1 signal to the current instance
     # usr2 = just send a usr2 signal to the current instance
     # term-start = stop the old instances, when no longer running, start a new one
     #
@@ -132,7 +132,7 @@ module Procodile
     end
 
     #
-    # Return the network protocol for this process
+    # Return the network protocol for this process
     #
     def network_protocol
       @options['network_protocol'] || 'tcp'

@@ -25,7 +25,7 @@ module Procodile
     end
 
     #
-    # Return the status of this instance
+    # Return the status of this instance
     #
     def status
       if stopped?
@@ -119,7 +119,7 @@ module Procodile
             Procodile.log(@process.log_color, description, "Assigned #{chosen_port} to process")
           end
         elsif @process.proxy? && @supervisor.tcp_proxy
-          # Allocate a port randomly if a proxy is needed
+          # Allocate a port randomly if a proxy is needed
           allocate_port
         end
 
@@ -160,7 +160,7 @@ module Procodile
     end
 
     #
-    # Is this stopped?
+    # Is this stopped?
     #
     def stopped?
       @stopped || false
@@ -354,7 +354,7 @@ module Procodile
     end
 
     #
-    # Is the given port available?
+    # Is the given port available?
     #
     def port_available?(port)
       case @process.network_protocol
@@ -375,8 +375,8 @@ module Procodile
     end
 
     #
-    # If procodile is executed through rbenv it will pollute our environment which means that
-    # any spawned processes will be invoked with procodile's ruby rather than the ruby that
+    # If procodile is executed through rbenv it will pollute our environment which means that
+    # any spawned processes will be invoked with procodile's ruby rather than the ruby that
     # the application wishes to use
     #
     def without_rbenv(&block)

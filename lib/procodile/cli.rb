@@ -63,7 +63,7 @@ module Procodile
     end
 
     #
-    # Start
+    # Start
     #
 
     desc "Starts processes and/or the supervisor"
@@ -148,7 +148,7 @@ module Procodile
         return
       else
         # The supervisor isn't actually running. We need to start it before processes can be
-        # begin being processed
+        # begin being processed
         if @options[:start_supervisor] == false
           raise Error, "Supervisor is not running and cannot be started because --no-supervisor is set"
         else
@@ -162,7 +162,7 @@ module Procodile
     end
 
     #
-    # Stop
+    # Stop
     #
 
     desc "Stops processes and/or the supervisor"
