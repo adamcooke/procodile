@@ -7,7 +7,7 @@ module Procodile
     attr_reader :id
     attr_accessor :process
     attr_reader :tag
-    attr_reader :port
+    attr_accessor :port
 
     def initialize(supervisor, process, id)
       @supervisor = supervisor
@@ -121,6 +121,16 @@ module Procodile
         elsif @process.proxy? && @supervisor.tcp_proxy
           # Allocate a port randomly if a proxy is needed
           allocate_port
+        elsif @process.allocate_port_from && @process.restart_mode != 'start-term'
+          # Allocate ports to this process sequentially from the starting port
+          allocated_ports = (@supervisor.processes[@process] ? @supervisor.processes[@process].select(&:running?) : []).map(&:port)
+          proposed_port = @process.allocate_port_from
+          until @port
+            unless allocated_ports.include?(proposed_port)
+              @port = proposed_port
+            end
+            proposed_port += 1
+          end
         end
 
         if self.process.log_path && @supervisor.run_options[:force_single_log] != true
@@ -217,7 +227,9 @@ module Procodile
         else
           Procodile.log(@process.log_color, description, "Process not running already. Starting it.")
           on_stop
-          @process.create_instance(@supervisor).start
+          new_instance = @process.create_instance(@supervisor)
+          new_instance.port = self.port
+          new_instance.start
         end
         self
       when 'start-term'
@@ -228,6 +240,7 @@ module Procodile
       when 'term-start'
         stop
         new_instance = @process.create_instance(@supervisor)
+        new_instance.port = self.port
         Thread.new do
           sleep 0.5 while running?
           new_instance.start

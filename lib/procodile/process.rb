@@ -111,6 +111,13 @@ module Procodile
     end
 
     #
+    # Return the first port that ports should be allocated from for this process
+    #
+    def allocate_port_from
+      @options['allocate_port_from']
+    end
+
+    #
     # Is this process enabled for proxying?
     #
     def proxy?
