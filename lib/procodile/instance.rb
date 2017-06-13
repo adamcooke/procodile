@@ -123,10 +123,6 @@ module Procodile
           allocate_port
         end
 
-        if (@supervisor.run_options[:allocate_ports] && @supervisor.run_options[:allocate_ports].include?(@process.name)) || (@process.proxy? && @supervisor.tcp_proxy)
-          allocate_port
-        end
-
         if self.process.log_path && @supervisor.run_options[:force_single_log] != true
           log_destination = File.open(self.process.log_path, 'a')
           io = nil
