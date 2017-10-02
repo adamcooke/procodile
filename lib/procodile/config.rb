@@ -15,7 +15,7 @@ module Procodile
         raise Error, "Procfile not found at #{procfile_path}"
       end
       FileUtils.mkdir_p(pid_root)
-      FileUtils.chown(user, user, pid_root)
+      FileUtils.chown_R(user, user, pid_root)
 
       @processes = process_list.each_with_index.each_with_object({}) do |((name, command), index), hash|
         hash[name] = create_process(name, command, COLORS[index.divmod(COLORS.size)[1]])
