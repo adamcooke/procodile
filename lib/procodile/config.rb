@@ -1,3 +1,4 @@
+require 'etc'
 require 'yaml'
 require 'fileutils'
 require 'procodile/error'
@@ -15,7 +16,9 @@ module Procodile
         raise Error, "Procfile not found at #{procfile_path}"
       end
       FileUtils.mkdir_p(pid_root)
-      FileUtils.chown_R(user, user, pid_root)
+      current_user = Etc.getpwuid(::File::Stat.new(pid_root).uid).name
+      current_group = Etc.getgrgid(::File::Stat.new(pid_root).gid).name
+      FileUtils.chown_R(user, user, pid_root) unless user == current_user && user == current_group
 
       @processes = process_list.each_with_index.each_with_object({}) do |((name, command), index), hash|
         hash[name] = create_process(name, command, COLORS[index.divmod(COLORS.size)[1]])
