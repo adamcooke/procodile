@@ -259,7 +259,7 @@ module Procodile
             if instances.size > process.quantity
               quantity_to_stop = instances.size - process.quantity
               Procodile.log nil, "system", "Stopping #{quantity_to_stop} #{process.name} process(es)"
-              status[:stopped] = instances.last(quantity_to_stop).each(&:stop)
+              status[:stopped] = instances.first(quantity_to_stop).each(&:stop)
             end
           end
 
