@@ -1,0 +1,1 @@
+slow-worker: ruby process.rb slow-worker
