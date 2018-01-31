@@ -1,0 +1,4 @@
+processes:
+  slow-worker:
+    quantity: 1
+    restart_mode: start-term
