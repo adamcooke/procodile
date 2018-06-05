@@ -104,7 +104,7 @@ module Procodile
     end
 
     def pid_root
-      @pid_root ||= File.expand_path(local_options['pid_root'] || options['pid_root'] || 'pids', self.root)
+      File.expand_path(local_options['pid_root'] || options['pid_root'] || 'pids', self.root)
     end
 
     def supervisor_pid_path

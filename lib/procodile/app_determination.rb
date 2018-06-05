@@ -9,7 +9,7 @@ module Procodile
     # to us by the user (from --root and/or --procfile)
     def initialize(pwd, given_root, given_procfile, global_options = {})
       @pwd = pwd
-      @given_root = given_root ? File.expand_path(given_root, pwd) : nil
+      @given_root = given_root ? expand_path(given_root, pwd) : nil
       @given_procfile = given_procfile
       @global_options = global_options
       calculate
@@ -112,7 +112,7 @@ module Procodile
     def expand_path(path, root = nil)
       # Remove trailing slashes for normalization
       path = path.gsub(/\/\z/, '')
-      if path =~ /\//
+      if path =~ /\A\//
         # If the path starts with a /, it's absolute. Do nothing.
         path
       else
