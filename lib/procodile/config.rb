@@ -14,6 +14,15 @@ module Procodile
       unless File.file?(procfile_path)
         raise Error, "Procfile not found at #{procfile_path}"
       end
+
+      # We need to check to see if the local or options
+      # configuration will override the root that we've been given.
+      # If they do, we can throw away any reference to the one that the
+      # configuration was initialized with and start using that immediately.
+      if new_root = (local_options['root'] || options['root'])
+        @root = new_root
+      end
+
       FileUtils.mkdir_p(pid_root)
 
       @processes = process_list.each_with_index.each_with_object({}) do |((name, command), index), hash|
@@ -56,7 +65,7 @@ module Procodile
     end
 
     def root
-      local_options['root'] || options['root'] || @root
+      @root
     end
 
     def user
