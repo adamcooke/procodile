@@ -135,7 +135,7 @@ module Procodile
     end
 
     def procfile_path
-      @procfile_path || File.join(@root, 'Procfile')
+      @procfile_path || File.join(self.root, 'Procfile')
     end
 
     def options_path
