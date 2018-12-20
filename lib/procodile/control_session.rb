@@ -57,7 +57,6 @@ module Procodile
       "200 #{result.to_json}"
     end
 
-
     def status(options)
       instances = {}
       @supervisor.processes.each do |process, process_instances|
@@ -76,7 +75,15 @@ module Procodile
         :supervisor => @supervisor.to_hash,
         :instances => instances,
         :processes => processes,
-        :environment_variables => @supervisor.config.environment_variables
+        :environment_variables => @supervisor.config.environment_variables,
+        :procfile_path => @supervisor.config.procfile_path,
+        :options_path => @supervisor.config.options_path,
+        :local_options_path => @supervisor.config.local_options_path,
+        :sock_path => @supervisor.config.sock_path,
+        :log_root => @supervisor.config.log_root,
+        :supervisor_pid_path => @supervisor.config.supervisor_pid_path,
+        :pid_root => @supervisor.config.pid_root,
+        :loaded_at => @supervisor.config.loaded_at.to_i,
       }
       "200 #{result.to_json}"
     end
