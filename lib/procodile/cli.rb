@@ -306,6 +306,10 @@ module Procodile
         cli.options[:json] = true
       end
 
+      opts.on("--json-pretty", "Return the status as a JSON hash printed nicely") do
+        cli.options[:json_pretty] = true
+      end
+
       opts.on("--simple", "Return overall status") do
         cli.options[:simple] = true
       end
@@ -315,6 +319,8 @@ module Procodile
         status = ControlClient.run(@config.sock_path, 'status')
         if @options[:json]
           puts status.to_json
+        elsif @options[:json_pretty]
+          puts JSON.pretty_generate(status)
         elsif @options[:simple]
           if status['messages'].empty?
             message = status['instances'].map { |p,i| "#{p}[#{i.size}]" }
