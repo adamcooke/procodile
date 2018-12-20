@@ -28,6 +28,8 @@ module Procodile
       @processes = process_list.each_with_index.each_with_object({}) do |((name, command), index), hash|
         hash[name] = create_process(name, command, COLORS[index.divmod(COLORS.size)[1]])
       end
+
+      @loaded_at = Time.now
     end
 
     def reload
@@ -36,6 +38,7 @@ module Procodile
       @process_options = nil
       @local_options = nil
       @local_process_options = nil
+      @loaded_at = nil
 
       if @processes
         process_list.each do |name, command|
@@ -62,10 +65,15 @@ module Procodile
           end
         end
       end
+      @loaded_at = Time.now
     end
 
     def root
       @root
+    end
+
+    def loaded_at
+      @loaded_at
     end
 
     def user
