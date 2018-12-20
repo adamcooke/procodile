@@ -1,8 +1,8 @@
 require_relative './lib/procodile/version'
 Gem::Specification.new do |s|
   s.name          = "procodile"
-  s.description   = %q{Run Ruby/Rails processes in the background on Linux servers with ease.}
-  s.summary       = %q{This gem will help you run Ruby processes from a Procfile on Linux servers in the background.}
+  s.description   = %q{A sophisticated process manager for applications running on Linux & macOS.}
+  s.summary       = %q{This gem will help you run processes from a Procfile on Linux/macOS machines in the background or the foreground.}
   s.homepage      = "https://github.com/adamcooke/procodile"
   s.version       = Procodile::VERSION
   s.files         = Dir.glob("{lib,bin}/**/*")
