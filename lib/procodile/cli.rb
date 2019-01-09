@@ -396,7 +396,7 @@ module Procodile
     #
     # Open up the procodile log if it exists
     #
-    desc "Open a console within the environment"
+    desc "Open/stream a Procodile log file"
     options do |opts, cli|
       opts.on("-f", "Wait for additional data and display it straight away") do
         cli.options[:wait] = true
@@ -425,7 +425,6 @@ module Procodile
       else
         log_path = @config.log_path
       end
-      puts opts
       if File.exist?(log_path)
         exec("tail #{opts.join(' ')} #{log_path}")
       else
