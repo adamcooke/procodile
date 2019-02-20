@@ -16,5 +16,11 @@ describe Procodile::AppDetermination do
     expect(ap.in_app_directory?).to be false
   end
 
+  it "should have no procfile if only root is provided" do
+    ap = Procodile::AppDetermination.new('/home', '/some/app', nil)
+    expect(ap.root).to eq "/some/app"
+    expect(ap.procfile).to eq nil
+    expect(ap.in_app_directory?).to be false
+  end
 
 end

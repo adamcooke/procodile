@@ -42,7 +42,6 @@ rescue OptionParser::InvalidOption, OptionParser::MissingArgument => e
   exit 1
 end
 
-
 # Get the global configuration file data
 global_config_path = ENV['PROCODILE_CONFIG'] || "/etc/procodile"
 if File.file?(global_config_path)

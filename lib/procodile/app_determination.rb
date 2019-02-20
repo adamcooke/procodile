@@ -30,9 +30,9 @@ module Procodile
       @in_app_directory == true
     end
 
-    # If we have a root and procfile, we're all good
+    # If we have a root, we're all good
     def unambiguous?
-      !!(@root && @procfile)
+      !!@root
     end
 
     def ambiguous?
@@ -75,10 +75,8 @@ module Procodile
         @root = expand_path(root)
         @procfile = expand_path(procfile, @root)
       elsif root && procfile.nil?
-        # The user has given us a root, we can assume they want to use the procfile
-        # from the root
+        # The user has given us a root, we'll use that as the root
         @root = expand_path(root)
-        @procfile = File.join(@root, 'Procfile')
       elsif root.nil? && procfile
         # The user has given us a procfile but no root. We will assume the procfile
         # is in the root of the directory
@@ -88,9 +86,9 @@ module Procodile
         # The user has given us nothing. We will check to see if there's a Procfile
         # in the root of our current pwd
         if File.file?(File.join(pwd, 'Procfile'))
-          # If there's a procfile in our current pwd, we'll look at using that.
-          @procfile = File.join(pwd, 'Procfile')
-          @root = File.dirname(@procfile)
+          # If there's a procfile in our current pwd, we'll use our current
+          # directory as the root.
+          @root = pwd
           @in_app_directory = true
         end
       end
