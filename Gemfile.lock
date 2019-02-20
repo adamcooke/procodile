@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    procodile (1.0.23)
+    procodile (1.0.24)
       json
 
 GEM
