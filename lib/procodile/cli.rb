@@ -383,7 +383,10 @@ module Procodile
     command def console
       if cmd = @config.console_command
         environment = @config.environment_variables
-        puts environment.inspect
+        puts "Starting with #{cmd.color(33)}"
+        for key, value in environment
+          puts "              #{key.color(34)} #{value}"
+        end
         begin
           exec(environment, cmd)
         rescue Errno::ENOENT => e
