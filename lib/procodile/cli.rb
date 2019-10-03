@@ -55,7 +55,9 @@ module Procodile
       puts "The following commands are supported:"
       puts
       self.class.commands.sort_by { |k,v| k.to_s }.each do |method, options|
-        puts "  \e[34m#{method.to_s.ljust(18, ' ')}\e[0m #{options[:description]}"
+        if options[:description]
+          puts "  \e[34m#{method.to_s.ljust(18, ' ')}\e[0m #{options[:description]}"
+        end
       end
       puts
       puts "For details for the options available for each command, use the --help option."
@@ -362,19 +364,26 @@ module Procodile
     #
     # Run a command with a procodile environment
     #
-    desc "Run a command within the environment"
-    command def run
+    desc "Execute a command within the environment"
+    command def exec
       desired_command = ARGV.drop(1).join(' ')
+
+      if prefix = @config.exec_prefix
+        desired_command = "#{prefix} #{desired_command}"
+      end
+
       if desired_command.length == 0
         raise Error, "You need to specify a command to run (e.g. procodile run -- rake db:migrate)"
       else
         begin
-          exec(@config.environment_variables, desired_command)
+          Kernel.exec(@config.environment_variables, desired_command)
         rescue Errno::ENOENT => e
           raise Error, e.message
         end
       end
     end
+    alias run exec
+    command :run
 
     #
     # Run the configured console command

@@ -126,6 +126,10 @@ describe Procodile::Config do
       expect(config.console_command).to eq "irb -Ilib"
     end
 
+    it "should return an exec prefix" do
+      expect(config.exec_prefix).to eq "bundle exec"
+    end
+
     it "should be able to return options for a process" do
       expect(config.options_for_process('proc1')).to be_a Hash
       expect(config.options_for_process('proc1')['quantity']).to eq 2

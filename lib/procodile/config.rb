@@ -90,6 +90,10 @@ module Procodile
       local_options['console_command'] || options['console_command']
     end
 
+    def exec_prefix
+      local_options['exec_prefix'] || options['exec_prefix']
+    end
+
     def processes
       @processes ||= {}
     end

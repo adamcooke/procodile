@@ -2,6 +2,7 @@ app_name: specapp
 pid_root: tmp/pids
 log_path: log/procodile.log
 console_command: irb -Ilib
+exec_prefix: bundle exec
 env:
   RAILS_ENV: production
   FRUIT: apple
