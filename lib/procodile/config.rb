@@ -40,6 +40,7 @@ module Procodile
       @local_options = nil
       @local_process_options = nil
       @loaded_at = nil
+      @environment_variables = nil
 
       if @processes
         process_list.each do |name, command|
@@ -118,7 +119,11 @@ module Procodile
     end
 
     def environment_variables
-      (options['env'] || {}).merge(local_options['env'] || {})
+      @environment_variables ||= begin
+        (options['env'] || {}).merge(local_options['env'] || {}).each_with_object({}) do |(key, value), hash|
+          hash[key.to_s] = value.to_s
+        end
+      end
     end
 
     def pid_root

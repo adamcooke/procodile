@@ -6,6 +6,7 @@ env:
   RAILS_ENV: production
   FRUIT: apple
   VEGETABLE: potato
+  PORT: 3000
 processes:
   proc1:
     quantity: 2

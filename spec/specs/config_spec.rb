@@ -109,6 +109,11 @@ describe Procodile::Config do
       expect(config.environment_variables['FRUIT']).to eq 'apple'
     end
 
+    it "should stringify values on environment variables" do
+      expect(config.environment_variables).to be_a Hash
+      expect(config.environment_variables['PORT']).to eq '3000'
+    end
+
     it "should flatten environment variables that have environment variants" do
       expect(config.environment_variables['VEGETABLE']).to eq 'potato'
     end

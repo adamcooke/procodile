@@ -383,6 +383,7 @@ module Procodile
     command def console
       if cmd = @config.console_command
         environment = @config.environment_variables
+        puts environment.inspect
         begin
           exec(environment, cmd)
         rescue Errno::ENOENT => e
