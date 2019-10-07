@@ -365,8 +365,8 @@ module Procodile
     # Run a command with a procodile environment
     #
     desc "Execute a command within the environment"
-    command def exec
-      desired_command = ARGV.drop(1).join(' ')
+    command def exec(command = nil)
+      desired_command = command || ARGV.drop(1).join(' ')
 
       if prefix = @config.exec_prefix
         desired_command = "#{prefix} #{desired_command}"
@@ -375,8 +375,14 @@ module Procodile
       if desired_command.length == 0
         raise Error, "You need to specify a command to run (e.g. procodile run -- rake db:migrate)"
       else
+        environment = @config.environment_variables
+        puts "Running with #{desired_command.color(33)}"
+        for key, value in environment
+          puts "             #{key.color(34)} #{value}"
+        end
+
         begin
-          Kernel.exec(@config.environment_variables, desired_command)
+          Kernel.exec(environment, desired_command)
         rescue Errno::ENOENT => e
           raise Error, e.message
         end
@@ -391,16 +397,7 @@ module Procodile
     desc "Open a console within the environment"
     command def console
       if cmd = @config.console_command
-        environment = @config.environment_variables
-        puts "Starting with #{cmd.color(33)}"
-        for key, value in environment
-          puts "              #{key.color(34)} #{value}"
-        end
-        begin
-          exec(environment, cmd)
-        rescue Errno::ENOENT => e
-          raise Error, e.message
-        end
+        exec(cmd)
       else
         raise Error, "No console command has been configured in the Procfile"
       end
