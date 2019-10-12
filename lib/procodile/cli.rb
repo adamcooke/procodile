@@ -2,6 +2,7 @@ require 'fileutils'
 require 'procodile/version'
 require 'procodile/error'
 require 'procodile/message'
+require 'procodile/rbenv'
 require 'procodile/supervisor'
 require 'procodile/signal_handler'
 require 'procodile/control_client'
@@ -382,7 +383,10 @@ module Procodile
         end
 
         begin
-          Kernel.exec(environment, desired_command)
+          Dir.chdir(@config.root)
+          Rbenv.without do
+            Kernel.exec(environment, desired_command)
+          end
         rescue Errno::ENOENT => e
           raise Error, e.message
         end
