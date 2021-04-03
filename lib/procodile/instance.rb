@@ -190,8 +190,10 @@ module Procodile
       @stopping = Time.now
       update_pid
       if self.running?
-        Procodile.log(@process.log_color, description, "Sending #{@process.term_signal} to #{@pid}")
-        ::Process.kill(@process.term_signal, pid)
+        Array(@process.term_signal).each do |signal|
+          Procodile.log(@process.log_color, description, "Sending #{signal} to #{@pid}")
+          ::Process.kill(signal, pid)
+        end
       else
         Procodile.log(@process.log_color, description, "Process already stopped")
       end
